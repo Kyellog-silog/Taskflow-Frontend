@@ -18,7 +18,7 @@ export const useRealtime = ({ boardId, onTaskUpdate, onTaskMove }: UseRealtimeOp
     if (!boardId) return
 
     // Initialize WebSocket connection
-    const ws = new WebSocket(`ws://localhost:8000/ws/board/${boardId}`)
+    const ws = new WebSocket(`${process.env.REACT_APP_WS_URL}/board/${boardId}`)
     wsRef.current = ws
 
     ws.onopen = () => {
