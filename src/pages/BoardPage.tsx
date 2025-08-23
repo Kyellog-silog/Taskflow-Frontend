@@ -64,9 +64,7 @@ const BoardPage: React.FC = () => {
   useEffect(() => {
     if (!boardId || !user) return
 
-    // Only try to connect WebSocket if we have a WebSocket server
-    // For now, we'll disable WebSocket to avoid connection errors
-    // You can enable this later when you set up a WebSocket server
+
     const enableWebSocket = process.env.REACT_APP_ENABLE_WEBSOCKET === "true"
 
     if (enableWebSocket) {
