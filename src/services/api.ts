@@ -2,15 +2,27 @@ import axios, { type AxiosResponse, type AxiosError } from "axios"
 import logger from "../lib/logger"
 import FrontendPerformanceMonitor from "../lib/performanceMonitor"
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000"
+export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api"
+export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL || "http://localhost:8000"
 
-// Create axios instance
+// Create axios instance for API calls
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   withXSRFToken: true,
   xsrfCookieName: "XSRF-TOKEN",
   xsrfHeaderName: "X-XSRF-TOKEN",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  },
+})
+
+// Create separate axios instance for Sanctum CSRF cookie
+const sanctumApi = axios.create({
+  baseURL: SANCTUM_BASE_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -269,8 +281,8 @@ api.interceptors.response.use(
 export const authAPI = {
   // Get CSRF cookie from Sanctum
   getCsrfCookie: async () => {
-    logger.log("Getting CSRF cookie...")
-    await api.get("/sanctum/csrf-cookie")
+    logger.log("Getting CSRF cookie from:", SANCTUM_BASE_URL)
+    await sanctumApi.get("/sanctum/csrf-cookie")
     logger.log("CSRF cookie obtained")
   },
 
