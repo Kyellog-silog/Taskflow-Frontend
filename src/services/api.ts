@@ -2,8 +2,8 @@ import axios, { type AxiosResponse, type AxiosError } from "axios"
 import logger from "../lib/logger"
 import FrontendPerformanceMonitor from "../lib/performanceMonitor"
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000/api"
-export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL || "http://localhost:8000"
+export const API_BASE_URL = process.env.REACT_APP_API_URL
+export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL 
 
 // Create axios instance for API calls
 const api = axios.create({
