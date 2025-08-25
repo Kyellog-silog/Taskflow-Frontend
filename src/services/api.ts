@@ -381,8 +381,9 @@ export const authAPI = {
   getUser: async () => {
     logger.log("Fetching current user")
     const response = await api.get("/user")
-    logger.log("User data retrieved")
-    return response.data
+    logger.log("User data retrieved:", response.data)
+    // Backend returns user in response.data.data.user format
+    return response.data.data || response.data
   },
 
   forgotPassword: async (email: string) => {
