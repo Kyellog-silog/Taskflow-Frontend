@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL 
+export const API_BASE_URL = process.env.REACT_APP_API_URL!
 
 export const TASK_PRIORITIES = {
   LOW: "low",
@@ -42,7 +42,7 @@ export const STATUS_COLORS = {
   [TASK_STATUSES.DONE]: "bg-green-100 text-green-800",
 }
 
-export const WEBSOCKET_URL = process.env.REACT_APP_WS_URL 
+export const WEBSOCKET_URL = process.env.REACT_APP_WS_URL!
 
 export const PUSHER_CONFIG = {
     key:
