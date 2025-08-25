@@ -22,8 +22,9 @@ const LoginPage = () => {
 
   useEffect(() => {
     setMounted(true)
+    logger.log("🔍 LoginPage useEffect - user:", user);
     if (user) {
-      logger.log("User found, redirecting to dashboard:", user)
+      logger.log("✅ User found in LoginPage, redirecting to dashboard:", user)
       navigate("/dashboard", { replace: true })
     }
   }, [user, navigate])
@@ -33,19 +34,22 @@ const LoginPage = () => {
     setIsLoading(true)
 
     try {
-  logger.log("Attempting login...")
+      logger.log("🚀 Attempting login...");
       await login(email, password)
+      logger.log("✅ Login function completed successfully");
 
       toast({
         title: "Welcome back! 🎉",
         description: "Successfully signed in to TaskFlow",
       })
 
+      logger.log("🕒 Setting 100ms timeout for navigation...");
       setTimeout(() => {
+        logger.log("⏰ Timeout expired, navigating to dashboard...");
         navigate("/dashboard", { replace: true })
       }, 100)
     } catch (error: any) {
-      logger.error("Login failed:", error)
+      logger.error("❌ Login failed:", error)
       toast({
         title: "Sign in failed",
         description: error.response?.data?.message || error.message || "Please check your credentials",

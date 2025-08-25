@@ -294,7 +294,10 @@ function App() {
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
 
+  logger.log("🔐 PublicRoute - isLoading:", isLoading, "user:", user);
+
   if (isLoading) {
+    logger.log("⏳ PublicRoute showing loading spinner");
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner />
@@ -303,9 +306,11 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
+    logger.log("🚀 PublicRoute - User found, redirecting to dashboard:", user);
     return <Navigate to="/dashboard" replace />
   }
 
+  logger.log("📄 PublicRoute - No user, showing public content");
   return <>{children}</>
 }
 
