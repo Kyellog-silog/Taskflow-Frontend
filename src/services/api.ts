@@ -5,6 +5,11 @@ import FrontendPerformanceMonitor from "../lib/performanceMonitor"
 export const API_BASE_URL = process.env.REACT_APP_API_URL!
 export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL! 
 
+// Debug logging for production
+console.log('🔧 Environment Variables:')
+console.log('API_BASE_URL:', API_BASE_URL)
+console.log('SANCTUM_BASE_URL:', SANCTUM_BASE_URL) 
+
 // Create axios instance for API calls
 const api = axios.create({
   baseURL: API_BASE_URL,
