@@ -63,8 +63,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         logger.log('Session indicators detected, verifying authentication status')
         const response = await authAPI.getUser();
-        if (response.success && response.data.user) {
-          setUser(response.data.user);
+        if (response.user) {
+          setUser(response.user);
           setAuthAttempted()
         }
       } catch (error: any) {
@@ -86,8 +86,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     await authAPI.getCsrfCookie();
     const response = await authAPI.login(email, password);
-    if (response.success && response.data && response.data.user) {
-      setUser(response.data.user);
+    if (response.user) {
+      setUser(response.user);
       setAuthAttempted()
     }
     return response;
@@ -95,8 +95,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (name: string, email: string, password: string, password_confirmation: string) => {
     const response = await authAPI.register(name, email, password, password_confirmation);
-    if (response.success && response.data && response.data.user) {
-      setUser(response.data.user);
+    if (response.user) {
+      setUser(response.user);
       setAuthAttempted()
     }
     return response;
@@ -115,8 +115,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const updateProfile = async (profileData: any) => {
     try {
       const response = await authAPI.updateProfile(profileData);
-      if (response.success && response.data?.user) {
-        setUser(response.data.user);
+      if (response.user) {
+        setUser(response.user);
       }
       return response;
     } catch (error) {
@@ -127,8 +127,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUser = async () => {
     try {
       const response = await authAPI.getUser();
-      if (response.success && response.data.user) {
-        setUser(response.data.user);
+      if (response.user) {
+        setUser(response.user);
       }
     } catch (error) {
       logger.error('Failed to refresh user data:', error);
