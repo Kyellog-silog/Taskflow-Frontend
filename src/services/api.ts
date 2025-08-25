@@ -2,6 +2,14 @@ import axios, { type AxiosResponse, type AxiosError } from "axios"
 import logger from "../lib/logger"
 import FrontendPerformanceMonitor from "../lib/performanceMonitor"
 
+// Utility function to get cookie value
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+  return null
+}
+
 export const API_BASE_URL = process.env.REACT_APP_API_URL!
 export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL! 
 
@@ -14,9 +22,6 @@ console.log('SANCTUM_BASE_URL:', SANCTUM_BASE_URL)
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  withXSRFToken: true,
-  xsrfCookieName: "XSRF-TOKEN",
-  xsrfHeaderName: "X-XSRF-TOKEN",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -289,6 +294,13 @@ export const authAPI = {
     logger.log("Getting CSRF cookie from:", SANCTUM_BASE_URL)
     await sanctumApi.get("/sanctum/csrf-cookie")
     logger.log("CSRF cookie obtained")
+    
+    // Get CSRF token from cookie and set it in axios headers
+    const csrfToken = getCookie('XSRF-TOKEN')
+    if (csrfToken) {
+      api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
+      logger.log("CSRF token set in headers")
+    }
   },
 
   login: async (email: string, password: string) => {
@@ -316,6 +328,13 @@ export const authAPI = {
     logger.log("Registering user:", email)
     try {
       await authAPI.getCsrfCookie()
+      
+      // Double check CSRF token is set
+      const csrfToken = getCookie('XSRF-TOKEN')
+      if (csrfToken) {
+        api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
+      }
+      
       const response = await api.post("/auth/register", {
         name,
         email,
