@@ -92,18 +92,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await authAPI.getCsrfCookie();
     const response = await authAPI.login(email, password);
     logger.log("📨 Login API response:", response);
+    logger.log("📨 Login API response structure:", JSON.stringify(response, null, 2));
     
     // Backend returns user in response.data.user format
     const user = response.data?.user || response.user;
     logger.log("👤 Extracted user data:", user);
+    logger.log("👤 Extracted user data structure:", JSON.stringify(user, null, 2));
     
     if (user) {
       logger.log("✅ Setting user in context:", user);
       setUser(user);
       setAuthAttempted()
       logger.log("🎯 User state should now be set. Current user after setUser:", user);
+      logger.log("🎯 Immediate verification - Current user state in context:", user);
     } else {
       logger.error("❌ No user data found in response!");
+      logger.error("❌ Response data structure:", JSON.stringify(response, null, 2));
     }
     return response;
   }
