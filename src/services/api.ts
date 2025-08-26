@@ -471,6 +471,37 @@ export const authAPI = {
     }
   },
 
+  acceptInvitation: async (token: string) => {
+    logger.log("Accepting invitation with token:", token)
+    try {
+      const response = await api.post(`/invitations/${token}/accept`)
+      logger.log("Invitation accepted successfully")
+
+      // Success toast
+      safeToast({
+        title: "Welcome to the Team!",
+        description: "You have successfully joined the team.",
+        variant: "default",
+      })
+
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
+  rejectInvitation: async (token: string) => {
+    logger.log("Rejecting invitation with token:", token)
+    try {
+      const response = await api.post(`/invitations/${token}/reject`)
+      logger.log("Invitation rejected successfully")
+
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
   uploadAvatar: async (file: File) => {
     logger.log("Uploading avatar")
     try {

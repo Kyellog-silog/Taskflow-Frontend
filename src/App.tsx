@@ -19,6 +19,7 @@ import { API_BASE_URL } from "./services/api"
 // Pages
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
+import InvitePage from "./pages/InvitePage"
 import DashboardPage from "./pages/DashboardPage"
 import BoardPage from "./pages/BoardPage"
 import BoardsPage from "./pages/BoardsPage"
@@ -206,6 +207,10 @@ function App() {
                           <RegisterPage />
                         </PublicRoute>
                       }
+                    />
+                    <Route
+                      path="/invite/:token"
+                      element={<InvitePage />}
                     />
 
                     {/* Protected Routes */}
