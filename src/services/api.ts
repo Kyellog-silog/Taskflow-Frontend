@@ -10,8 +10,8 @@ const getCookie = (name: string): string | null => {
   return null
 }
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL!
-export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL! 
+export const API_BASE_URL = process.env.REACT_APP_API_URL || "https://taskflow-backend-production-1a6a.up.railway.app/api"
+export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL || "https://taskflow-backend-production-1a6a.up.railway.app" 
 
 // Debug logging for production
 console.log('🔧 Environment Variables:')
