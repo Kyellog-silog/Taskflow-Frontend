@@ -1,4 +1,3 @@
-// Simple dev-only logger; production is no-op except errors can optionally pass through
 export const isDev = process.env.NODE_ENV !== "production"
 
 export const log = (...args: any[]) => {
@@ -10,7 +9,6 @@ export const warn = (...args: any[]) => {
 }
 
 export const error = (...args: any[]) => {
-  // Keep errors visible in dev; in prod you might forward to telemetry instead
   console.error(...args)
 }
 

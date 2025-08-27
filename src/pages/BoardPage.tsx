@@ -277,7 +277,6 @@ const BoardPage: React.FC = () => {
       }
     : clientTeamPerms
 
-  // Show permission status in console for debugging
   logger.log("User permissions for board:", {
     userRole: permissions.userRole,
     canEditTasks: permissions.canEditTasks,

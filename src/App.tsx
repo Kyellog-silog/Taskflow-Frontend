@@ -50,7 +50,6 @@ const queryClient = new QueryClient({
   },
 })
 
-// Silence react-query logs in production
 if (process.env.NODE_ENV !== "development") {
   setLogger({
     log: () => {},

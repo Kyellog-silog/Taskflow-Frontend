@@ -11,10 +11,6 @@ class FrontendPerformanceMonitor {
     if (!this.enabled) return
     
     this.timers.set(name, performance.now())
-    
-    if (context) {
-      console.debug(`⏱️ Started ${name}:`, context)
-    }
   }
 
   static endTimer(name: string, context?: any): number {
@@ -32,11 +28,9 @@ class FrontendPerformanceMonitor {
     }
     
     if (duration > 1000) {
-      console.warn('🐌 Slow operation detected:', logData)
+      // Slow operation detected
     } else if (duration > 500) {
-      console.log('⚠️ Performance warning:', logData)
-    } else {
-      console.debug('✅ Performance timing:', logData)
+      // Performance warning
     }
     
     return duration
@@ -97,11 +91,9 @@ class FrontendPerformanceMonitor {
     }
     
     if (duration > 2000) {
-      console.warn('🐌 Slow API call:', logData)
+      // Slow API call detected
     } else if (duration > 1000) {
-      console.log('⚠️ API performance warning:', logData)
-    } else {
-      console.debug('📡 API call timing:', logData)
+      // API performance warning
     }
   }
 }

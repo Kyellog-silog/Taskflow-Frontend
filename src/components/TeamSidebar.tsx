@@ -555,7 +555,6 @@ export function TeamSidebar({
                                       const memberRole = member.id === team.owner?.id ? 'owner' : member.role
                                       const roleInfo = getRoleDisplayInfo(memberRole)
                                       
-                                      // Debug logging for sidebar display
                                       logger.log(`[SIDEBAR] Member ${member.name} (ID: ${member.id}) - Role: ${member.role}, Display: ${memberRole}`)
                                       
                                       return (
@@ -734,7 +733,6 @@ export function TeamSidebar({
                     const canManageMember = canUserManageTeam(selectedTeam, user?.id || '') && 
                                           selectedTeam.owner?.id !== member.id
                     
-                    // Debug logging
                     logger.log(`Member ${member.name} (ID: ${member.id}) - Role: ${member.role}, Display: ${memberRole}`)
                     
                     return (

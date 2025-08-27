@@ -240,7 +240,6 @@ const DashboardPage = () => {
 
   const handleDuplicateBoard = (board: any, e: React.MouseEvent) => {
     e.stopPropagation()
-    // TODO: Implement board duplication
     toast({
       title: "Coming Soon! 🚀",
       description: "Board duplication feature is coming soon",

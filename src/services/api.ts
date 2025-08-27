@@ -13,11 +13,6 @@ const getCookie = (name: string): string | null => {
 export const API_BASE_URL = process.env.REACT_APP_API_URL || "https://taskflow-backend-production-1a6a.up.railway.app/api"
 export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL || "https://taskflow-backend-production-1a6a.up.railway.app" 
 
-// Debug logging for production
-console.log('🔧 Environment Variables:')
-console.log('API_BASE_URL:', API_BASE_URL)
-console.log('SANCTUM_BASE_URL:', SANCTUM_BASE_URL) 
-
 // Create axios instance for API calls
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -40,27 +35,24 @@ const sanctumApi = axios.create({
   },
 })
 
-// Global toast handler - will be set by App component
+// Global toast handler
 let globalToast: any = null
 
 export const setGlobalToast = (toast: any) => {
   globalToast = toast
 }
 
-// Safe toast function that checks if globalToast exists
 const safeToast = (toastData: any) => {
   if (globalToast && globalToast.toast && typeof globalToast.toast === "function") {
     globalToast.toast(toastData)
   } else {
-    // Fallback to console in dev only
     logger.warn("Toast not available:", toastData)
   }
 }
 
-// Request interceptor - log requests and start timing
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Start performance timer
     const startTime = performance.now()
     ;(config as any).startTime = startTime
 
@@ -70,14 +62,12 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// Response interceptor for error handling and performance logging
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Calculate request duration
     const endTime = performance.now()
     const duration = endTime - ((response.config as any).startTime || endTime)
 
-    // Log performance
     FrontendPerformanceMonitor.logApiCall(
       response.config.method?.toUpperCase() || "GET",
       response.config.url || "",
@@ -100,26 +90,21 @@ api.interceptors.response.use(
       logger.error(`API Error ${status || "network"}`)
     }
 
-    // Handle different error types
     switch (status) {
       case 401:
-        // Unauthorized - token expired or invalid
         safeToast({
           title: "Session Expired",
           description: "Please log in again to continue.",
           variant: "destructive",
         })
-        // Save current path for redirect after login
         const currentPath = window.location.pathname
         if (currentPath !== "/login" && currentPath !== "/register") {
           localStorage.setItem("redirectPath", currentPath)
         }
         localStorage.removeItem("token")
-        // Don't redirect here, let the auth context handle it
         break
 
       case 403:
-        // Forbidden - provide more specific messages based on endpoint
         let forbiddenMessage = "You don't have permission to perform this action."
         let forbiddenTitle = "Access Denied"
         
@@ -143,7 +128,6 @@ api.interceptors.response.use(
         break
 
       case 404:
-        // Not found - provide more specific messages
         let notFoundMessage = "The requested resource was not found."
         let notFoundTitle = "Not Found"
         
@@ -167,7 +151,6 @@ api.interceptors.response.use(
         break
 
       case 405:
-        // Method Not Allowed
         safeToast({
           title: "Method Not Allowed",
           description: "The request method is not supported for this endpoint.",
@@ -176,7 +159,6 @@ api.interceptors.response.use(
         break
 
       case 419:
-        // CSRF token mismatch
         safeToast({
           title: "Session Error",
           description: "Your session has expired. Please refresh the page and try again.",
@@ -185,11 +167,9 @@ api.interceptors.response.use(
         break
 
       case 422:
-        // Validation errors
         if (data?.errors) {
           const errorMessages = Object.values(data.errors).flat().join(", ")
           
-          // Get more specific error title based on the endpoint
           let errorTitle = "Validation Error"
           const url = error.config?.url || ""
           
@@ -209,11 +189,9 @@ api.interceptors.response.use(
             variant: "destructive",
           })
         } else {
-          // Handle authentication-specific messages for security
           let errorMessage = data?.message || "Please check your input and try again."
           let errorTitle = "Validation Error"
 
-          // Security: Replace specific credential error messages with generic ones
           if (
             errorMessage.includes("These credentials do not match our records") ||
             errorMessage.includes("credentials do not match") ||
@@ -224,13 +202,11 @@ api.interceptors.response.use(
             errorTitle = "Login Failed"
           }
           
-          // Handle specific registration errors
           if (errorMessage.includes("email has already been taken")) {
             errorMessage = "This email address is already registered. Try logging in instead."
             errorTitle = "Registration Failed"
           }
           
-          // Handle specific team errors
           const url = error.config?.url || ""
           if (url.includes("/teams") && errorMessage.includes("already exists")) {
             errorMessage = "A team with this name already exists. Please choose a different name."
@@ -246,7 +222,6 @@ api.interceptors.response.use(
         break
 
       case 429:
-        // Too many requests
         safeToast({
           title: "Too Many Requests",
           description: "Please wait a moment before trying again.",
@@ -255,7 +230,6 @@ api.interceptors.response.use(
         break
 
       case 500:
-        // Server error
         safeToast({
           title: "Server Error",
           description: "Something went wrong on our end. Please try again later.",
@@ -264,16 +238,13 @@ api.interceptors.response.use(
         break
 
       default:
-        // Network or other errors
         if (!error.response) {
-          // Network error
           safeToast({
             title: "Connection Error",
             description: "Unable to connect to the server. Please check your internet connection.",
             variant: "destructive",
           })
         } else {
-          // Other HTTP errors
           safeToast({
             title: "Error",
             description: data?.message || "An unexpected error occurred.",
@@ -287,15 +258,13 @@ api.interceptors.response.use(
   },
 )
 
-// Auth API - Using Sanctum cookie-based authentication
+// Auth API
 export const authAPI = {
-  // Get CSRF cookie from Sanctum
   getCsrfCookie: async () => {
     logger.log("Getting CSRF cookie from:", SANCTUM_BASE_URL)
     await sanctumApi.get("/sanctum/csrf-cookie")
     logger.log("CSRF cookie obtained")
     
-    // Get CSRF token from cookie and set it in axios headers
     const csrfToken = getCookie('XSRF-TOKEN')
     if (csrfToken) {
       api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
@@ -319,7 +288,6 @@ export const authAPI = {
 
       return response.data
     } catch (error: any) {
-      // Let the interceptor handle the error, but don't show success message
       throw error
     }
   },
@@ -329,7 +297,6 @@ export const authAPI = {
     try {
       await authAPI.getCsrfCookie()
       
-      // Double check CSRF token is set
       const csrfToken = getCookie('XSRF-TOKEN')
       if (csrfToken) {
         api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
@@ -372,7 +339,6 @@ export const authAPI = {
 
       return response.data
     } catch (error: any) {
-      // Even if logout fails on server, we still want to clear local state
       logger.warn("Logout request failed but continuing with local logout")
       return {}
     }
@@ -382,7 +348,6 @@ export const authAPI = {
     logger.log("Fetching current user")
     const response = await api.get("/user")
     logger.log("User data retrieved:", response.data)
-    // Backend returns user in response.data.data.user format
     return response.data.data || response.data
   },
 
@@ -547,7 +512,6 @@ export const tasksAPI = {
         if (opts?.page) params.append("page", String(opts.page))
         if (opts?.limit) params.append("limit", String(opts.limit))
 
-        // Only include relationships when needed
         if (opts?.include_board) params.append("include_board", "1")
         if (opts?.include_column) params.append("include_column", "1")
         if (opts?.include_comments) params.append("include_comments", "1")
@@ -566,7 +530,6 @@ export const tasksAPI = {
     )
   },
 
-  // Lightweight counters for dashboard widgets
   getDueTodayCount: async () => {
     const response = await api.get(`/tasks?due=today&uncompleted=1&only_count=1`)
     return response.data
@@ -592,12 +555,11 @@ export const tasksAPI = {
     try {
       await authAPI.getCsrfCookie()
 
-      // Ensure field names are correctly formatted
       const formattedData = {
         title: taskData.title,
         description: taskData.description || "",
         board_id: taskData.board_id || taskData.boardId,
-        column_id: taskData.column_id || taskData.columnId, // Ensure column_id is set
+        column_id: taskData.column_id || taskData.columnId,
         assignee_id: taskData.assignee_id || taskData.assigneeId || null,
         priority: taskData.priority || "medium",
         due_date: taskData.due_date || taskData.dueDate || null,
@@ -605,7 +567,6 @@ export const tasksAPI = {
 
       logger.log("Formatted task data for API:", formattedData)
 
-      // Verify important fields exist
       if (!formattedData.column_id) {
         logger.warn("column_id is missing in task data")
       }
@@ -622,7 +583,6 @@ export const tasksAPI = {
       
       return response.data
     } catch (error: any) {
-      // Error will be handled by interceptor, but add specific context
       throw error
     }
   },
@@ -632,7 +592,6 @@ export const tasksAPI = {
     try {
       await authAPI.getCsrfCookie()
 
-      // Format field names for consistency
       const formattedData = {
         ...(taskData.title !== undefined && { title: taskData.title }),
         ...(taskData.description !== undefined && { description: taskData.description }),
@@ -916,7 +875,6 @@ export const boardsAPI = {
     }
   },
 
-  // Add team to board
   addTeamToBoard: async (boardId: string, teamId: string) => {
     logger.log(`Adding team ${teamId} to board ${boardId}...`)
     try {
@@ -924,7 +882,6 @@ export const boardsAPI = {
       const response = await api.post(`/boards/${boardId}/teams/${teamId}`)
       logger.log("Team added to board successfully")
       
-      // Success toast
       safeToast({
         title: "Team Added to Board",
         description: "The team has been successfully added to this board.",
@@ -937,7 +894,6 @@ export const boardsAPI = {
     }
   },
 
-  // Remove team from board
   removeTeamFromBoard: async (boardId: string, teamId: string) => {
     logger.log(`Removing team ${teamId} from board ${boardId}...`)
     try {
@@ -945,7 +901,6 @@ export const boardsAPI = {
       const response = await api.delete(`/boards/${boardId}/teams/${teamId}`)
       logger.log("Team removed from board successfully")
       
-      // Success toast
       safeToast({
         title: "Team Removed",
         description: "The team has been removed from this board.",
@@ -958,7 +913,6 @@ export const boardsAPI = {
     }
   },
 
-  // Get board teams
   getBoardTeams: async (boardId: string) => {
     logger.log(`Getting teams for board ${boardId}...`)
     const response = await api.get(`/boards/${boardId}/teams`)
@@ -1103,7 +1057,6 @@ export const teamsAPI = {
     }
   },
 
-  // Get team boards
   getTeamBoards: async (teamId: string) => {
     logger.log(`Fetching boards for team ${teamId}`)
     const response = await api.get(`/teams/${teamId}/boards`)
@@ -1111,7 +1064,6 @@ export const teamsAPI = {
     return response.data
   },
 
-  // Invite member by email (uses invitation system)
   inviteMember: async (teamId: string, email: string, role = "member") => {
     logger.log(`Inviting ${email} to team ${teamId} with role ${role}`)
     try {
@@ -1119,7 +1071,6 @@ export const teamsAPI = {
       const response = await api.post(`/teams/${teamId}/invite`, { email, role })
       logger.log("Team invitation sent successfully")
       
-      // Return response data for component to handle toast messaging
       return response.data
     } catch (error: any) {
       throw error
@@ -1194,7 +1145,6 @@ export const notificationsAPI = {
       await authAPI.getCsrfCookie()
       const response = await api.post(`/notifications/${notificationId}/read`)
       
-      // Success toast
       safeToast({
         title: "Notification Marked as Read",
         description: "The notification has been marked as read.",
@@ -1211,7 +1161,6 @@ export const notificationsAPI = {
       await authAPI.getCsrfCookie()
       const response = await api.post(`/notifications/read-all`)
       
-      // Success toast
       safeToast({
         title: "All Notifications Read",
         description: "All notifications have been marked as read.",
