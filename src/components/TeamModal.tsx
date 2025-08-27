@@ -59,6 +59,26 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
   const isAdmin = currentMember?.role === "admin"
   const canManage = isOwner || isAdmin
 
+  // Invite member mutation
+  const inviteMemberMutation = useMutation({
+    mutationFn: ({ teamId, email }: { teamId: string; email: string }) =>
+      teamsAPI.inviteMember(teamId, email),
+    onSuccess: () => {
+      // API already shows success toast, just clear the input
+      setNewMemberEmail("")
+    },
+    onError: (error: any) => {
+      // Only show error toast if not already handled by API
+      if (!error.response?.data?.message?.includes("toast")) {
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Failed to send invitation",
+          variant: "destructive",
+        })
+      }
+    },
+  })
+
   // Update member role mutation
   const updateMemberRoleMutation = useMutation({
     mutationFn: ({ teamId, userId, role }: { teamId: string; userId: string; role: string }) =>
@@ -100,6 +120,26 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
       teamId,
       userId: memberId,
       role: newRole,
+    })
+  }
+
+  const handleInviteMember = () => {
+    if (!canManage || !newMemberEmail.trim()) return
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(newMemberEmail)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      })
+      return
+    }
+
+    inviteMemberMutation.mutate({
+      teamId: editedTeam.id,
+      email: newMemberEmail,
     })
   }
 
@@ -298,16 +338,23 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                       placeholder="Enter email address"
                       value={newMemberEmail}
                       onChange={(e) => setNewMemberEmail(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault()
+                          handleInviteMember()
+                        }
+                      }}
                       className="flex-1 bg-white border-2 border-gray-200 focus:border-blue-500"
                       disabled={!canManage}
                     />
                     <Button
-                      disabled={!canManage}
+                      onClick={handleInviteMember}
+                      disabled={!canManage || !newMemberEmail.trim() || inviteMemberMutation.isLoading}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-60"
                       title={!canManage ? "Only admins or the owner can invite members" : undefined}
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      Invite
+                      {inviteMemberMutation.isLoading ? "Sending..." : "Invite"}
                     </Button>
                   </div>
                 </div>
@@ -335,7 +382,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                             {member.role === "admin" && <Crown className="h-4 w-4 text-yellow-500" />}
                           </div>
                           <p className="text-sm text-gray-600">
-                            {member.email || `${member.name.toLowerCase().replace(" ", ".")}@example.com`}
+                            {member.email || `${member.name.toLowerCase().replace(" ", ".")}`}
                           </p>
                         </div>
                       </div>
