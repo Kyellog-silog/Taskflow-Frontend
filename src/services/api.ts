@@ -1119,13 +1119,7 @@ export const teamsAPI = {
       const response = await api.post(`/teams/${teamId}/invite`, { email, role })
       logger.log("Team invitation sent successfully")
       
-      // Success toast
-      safeToast({
-        title: "Invitation Sent!",
-        description: `An invitation has been sent to ${email} to join your team.`,
-        variant: "default",
-      })
-      
+      // Return response data for component to handle toast messaging
       return response.data
     } catch (error: any) {
       throw error

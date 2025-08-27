@@ -63,8 +63,17 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
   const inviteMemberMutation = useMutation({
     mutationFn: ({ teamId, email }: { teamId: string; email: string }) =>
       teamsAPI.inviteMember(teamId, email),
-    onSuccess: () => {
-      // API already shows success toast, just clear the input
+    onSuccess: (response, variables) => {
+      // Show custom toast based on response message
+      const isResend = response?.message?.includes('resent')
+      toast({
+        title: isResend ? "Invitation Resent!" : "Invitation Sent!",
+        description: isResend 
+          ? `A new invitation link has been sent to ${variables.email}` 
+          : `An invitation has been sent to ${variables.email}`,
+      })
+      
+      // Clear the input after showing toast
       setNewMemberEmail("")
     },
     onError: (error: any) => {
@@ -333,9 +342,12 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                 {/* Invite New Member */}
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border-2 border-blue-200">
                   <h3 className="text-lg font-bold text-gray-800 mb-4">Invite New Member</h3>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Enter an email address to invite someone to join your team. If they didn't receive the first invitation, you can resend it anytime.
+                  </p>
                   <div className="flex space-x-3">
                     <Input
-                      placeholder="Enter email address"
+                      placeholder="Enter email address (safe to resend)"
                       value={newMemberEmail}
                       onChange={(e) => setNewMemberEmail(e.target.value)}
                       onKeyDown={(e) => {
@@ -354,7 +366,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                       title={!canManage ? "Only admins or the owner can invite members" : undefined}
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      {inviteMemberMutation.isLoading ? "Sending..." : "Invite"}
+                      {inviteMemberMutation.isLoading ? "Sending..." : "Send Invite"}
                     </Button>
                   </div>
                 </div>
