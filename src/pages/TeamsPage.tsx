@@ -304,7 +304,7 @@ const TeamsPage = () => {
             <div className="flex items-center justify-between text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg p-4">
               <div className="flex items-center space-x-4">
                 <span>
-                  Role: <span className="font-semibold capitalize text-blue-600">{user?.role}</span>
+                  Member: <span className="font-semibold capitalize text-blue-600">TaskFlow User</span>
                 </span>
                 <span>•</span>
                 <span>

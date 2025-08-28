@@ -204,7 +204,7 @@ const SettingsPage: React.FC = () => {
                       <p className="text-sm text-gray-600">{user?.email}</p>
                       <Badge className="mt-2 bg-blue-100 text-blue-700">
                         <Shield className="h-3 w-3 mr-1" />
-                        {user?.role}
+                        Member
                       </Badge>
                     </div>
                   </CardContent>

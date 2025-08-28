@@ -1,7 +1,7 @@
 "use client"
 import * as React from "react"
 import { forwardRef } from "react"
-import { MoreHorizontal, Calendar, MessageSquare, AlertCircle, Clock, User, Flag, Edit, Trash2, GripVertical } from 'lucide-react'
+import { MoreHorizontal, Calendar, MessageSquare, AlertCircle, Clock, Edit, Trash2 } from 'lucide-react'
 import { Card, CardContent } from "./ui/card"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"

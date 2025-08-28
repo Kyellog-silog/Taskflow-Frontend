@@ -5,7 +5,7 @@ import { useDroppable } from "@dnd-kit/core"
 import { Plus, AlertTriangle, Users, Sparkles, Target } from 'lucide-react'
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+// Removed unused Card components
 
 interface Column {
   id: string
