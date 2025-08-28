@@ -173,7 +173,7 @@ const ProfilePage = () => {
                         <p className="text-gray-600">{user?.email}</p>
                         <Badge className="mt-2 bg-blue-100 text-blue-700">
                           <Award className="h-3 w-3 mr-1" />
-                          {user?.role || "Member"}
+                          Member
                         </Badge>
                       </div>
                     </div>

@@ -14,7 +14,6 @@ interface User {
   id: string
   name: string
   email: string
-  role: "admin" | "member"
   avatar?: string
   bio?: string
   phone?: string

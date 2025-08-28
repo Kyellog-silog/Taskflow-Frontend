@@ -2,7 +2,6 @@ export interface User {
     id: string
     name: string
     email: string
-    role: UserRole
     avatar?: string
     phone?: string
     location?: string
@@ -17,7 +16,7 @@ export interface User {
     createdTasks?: Task[]
   }
   
-  export type UserRole = "admin" | "member"
+  // Note: UserRole removed - roles are now team-specific only
   
   export interface TeamMembership {
     id: string

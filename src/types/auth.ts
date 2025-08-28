@@ -2,7 +2,6 @@ export interface User {
     id: string
     name: string
     email: string
-    role: "admin" | "member"
     avatar?: string
     createdAt: string
     updatedAt: string
