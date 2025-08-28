@@ -258,11 +258,12 @@ export function TeamSidebar({
   const handleInviteMember = (teamId: string) => {
     if (!newMemberEmail.trim()) return
 
-    inviteMemberMutation.mutate({
-      teamId,
-      email: newMemberEmail,
-      role: newMemberRole,
+    toast({
+      title: "Email Invites Coming Soon! 🚧",
+      description: "Email invitations are currently under development.",
+      variant: "default",
     })
+    setNewMemberEmail("")
   }
 
   const handleRemoveMember = (teamId: string, memberId: string) => {

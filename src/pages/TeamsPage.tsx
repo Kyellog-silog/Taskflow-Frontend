@@ -105,20 +105,11 @@ const TeamsPage = () => {
     const email = prompt("Enter the email address of the person you want to invite:")
     if (!email) return
 
-    try {
-      await teamsAPI.inviteMember(teamId, email, "member")
-      toast({
-        title: "Success",
-        description: "Invitation sent successfully! 📧",
-      })
-      queryClient.invalidateQueries("teams")
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to send invitation",
-        variant: "destructive",
-      })
-    }
+    toast({
+      title: "Email Invites Coming Soon! 🚧",
+      description: "Email invitations are currently under development.",
+      variant: "default",
+    })
   }
 
   const handleCreateTeam = (e: React.FormEvent) => {

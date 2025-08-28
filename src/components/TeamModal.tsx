@@ -135,7 +135,6 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
   const handleInviteMember = () => {
     if (!canManage || !newMemberEmail.trim()) return
     
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(newMemberEmail)) {
       toast({
@@ -146,10 +145,12 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
       return
     }
 
-    inviteMemberMutation.mutate({
-      teamId: editedTeam.id,
-      email: newMemberEmail,
+    toast({
+      title: "Email Invites Coming Soon! 🚧",
+      description: "Email invitations are currently under development.",
+      variant: "default",
     })
+    setNewMemberEmail("")
   }
 
   useEffect(() => {

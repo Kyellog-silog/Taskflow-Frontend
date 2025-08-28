@@ -243,6 +243,39 @@ const ProfilePage = () => {
                   </CardContent>
                 </Card>
 
+                {/* Security Settings */}
+                <Card className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-xl">
+                  <CardHeader>
+                    <CardTitle className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+                      <User className="h-6 w-6 text-blue-500" />
+                      <span>Security Settings</span>
+                    </CardTitle>
+                    <CardDescription>Manage your account security and password</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-100 rounded-full">
+                            <Sparkles className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-blue-800">Coming Soon! 🚀</h3>
+                            <p className="text-sm text-blue-600">Password reset functionality will be available soon.</p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          className="border-blue-300 text-blue-600 hover:bg-blue-100"
+                          disabled
+                        >
+                          Change Password
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Stats Dashboard */}
                 <Card className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-xl">
                   <CardHeader>
