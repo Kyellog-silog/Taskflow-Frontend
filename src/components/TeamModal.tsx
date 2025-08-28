@@ -146,7 +146,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
     }
 
     toast({
-      title: "Email Invites Coming Soon! 🚧",
+      title: "Email Invites Coming Soon!",
       description: "Email invitations are currently under development.",
       variant: "default",
     })

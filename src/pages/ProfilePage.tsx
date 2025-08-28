@@ -260,7 +260,7 @@ const ProfilePage = () => {
                             <Sparkles className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-blue-800">Coming Soon! 🚀</h3>
+                            <h3 className="font-bold text-blue-800">Coming Soon!</h3>
                             <p className="text-sm text-blue-600">Password reset functionality will be available soon.</p>
                           </div>
                         </div>

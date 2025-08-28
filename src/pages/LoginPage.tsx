@@ -185,7 +185,7 @@ const LoginPage = () => {
                     className="text-sm font-semibold text-blue-600 hover:text-purple-600 transition-colors duration-200 hover:underline"
                     onClick={() => {
                       toast({
-                        title: "Coming Soon! 🚀",
+                        title: "Coming Soon!",
                         description: "Password reset functionality will be available soon.",
                       })
                     }}

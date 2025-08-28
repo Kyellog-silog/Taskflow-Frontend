@@ -242,7 +242,7 @@ const BoardsPage = () => {
   const handleDuplicateBoard = (board: any, e: React.MouseEvent) => {
     e.stopPropagation()
     toast({
-      title: "Coming Soon! 🚀",
+      title: "Coming Soon!",
       description: "Board duplication feature is coming soon",
     })
   }

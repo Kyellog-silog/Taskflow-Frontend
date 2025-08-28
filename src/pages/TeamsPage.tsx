@@ -106,7 +106,7 @@ const TeamsPage = () => {
     if (!email) return
 
     toast({
-      title: "Email Invites Coming Soon! 🚧",
+      title: "Email Invites Coming Soon!",
       description: "Email invitations are currently under development.",
       variant: "default",
     })
