@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "react-query"
 import { Header } from "../components/Header"
 import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
-import { boardsAPI, tasksAPI } from "../services/api"
+import { boardsAPI } from "../services/api"
 import { Input } from "../components/ui/input"
 import { Badge } from "../components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
@@ -16,7 +16,7 @@ import { TeamModal } from "../components/TeamModal"
 import { teamsAPI } from "../services/api"
 import { useToast } from "../hooks/use-toast"
 import { useAuth } from "../contexts/AuthContext"
-import { Plus, Users, Settings, Crown, Sparkles, Target, TrendingUp, Eye, Edit, UserPlus, ExternalLink } from "lucide-react"
+import { Plus, Users, Settings, Crown, Sparkles, Target, TrendingUp, Edit, UserPlus, ExternalLink } from "lucide-react"
 
 interface Team {
   id: string
@@ -86,7 +86,6 @@ const TeamsPage = () => {
 
   const {
       data: allBoardsData,
-      isLoading: allBoardsLoading,
     } = useQuery(
       ["boards", "active"],
       async () => {

@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { boardsAPI, tasksAPI, profileAPI } from "../services/api"
 import { useToast } from "../hooks/use-toast"
 import { useAuth } from "../contexts/AuthContext"
-import { Calendar, Users, CheckSquare, Clock, MoreVertical, Folder, RefreshCw, Sparkles, Target, Edit, Trash2, Copy, ExternalLink, TrendingUp, Activity, Eye, Archive } from 'lucide-react'
+import { Users, CheckSquare, Clock, MoreVertical, Folder, RefreshCw, Target, Edit, Trash2, Copy, ExternalLink, TrendingUp, Activity, Eye, Archive } from 'lucide-react'
 import logger from "../lib/logger"
 
 
@@ -78,7 +78,6 @@ const DashboardPage = () => {
   // Fetch all active boards for stats
   const {
     data: allBoardsData,
-    isLoading: allBoardsLoading,
   } = useQuery(
     ["boards", "active"],
     async () => {

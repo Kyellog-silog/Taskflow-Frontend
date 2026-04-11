@@ -20,13 +20,6 @@ class FrontendPerformanceMonitor {
     const duration = performance.now() - startTime
     this.timers.delete(name)
     
-    const logData = {
-      operation: name,
-      duration_ms: Math.round(duration * 100) / 100,
-      memory_mb: this.getMemoryUsage(),
-      ...(context || {})
-    }
-    
     if (duration > 1000) {
       // Slow operation detected
     } else if (duration > 500) {
@@ -81,14 +74,6 @@ class FrontendPerformanceMonitor {
 
   static logApiCall(method: string, url: string, duration: number, status: number, responseSize?: number): void {
     if (!this.enabled) return
-    
-    const logData = {
-      api_call: `${method} ${url}`,
-      duration_ms: Math.round(duration * 100) / 100,
-      status,
-      response_size_kb: responseSize ? Math.round((responseSize / 1024) * 100) / 100 : undefined,
-      memory_mb: this.getMemoryUsage()
-    }
     
     if (duration > 2000) {
       // Slow API call detected

@@ -150,7 +150,6 @@ export const Header: React.FC = () => {
 
   const renderNotificationText = (n: any) => {
     const type = n.type
-    const data = n.data || {}
     switch (type) {
       case "task.assigned":
         return <div>You've been assigned to a task.</div>

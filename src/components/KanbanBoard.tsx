@@ -4,13 +4,11 @@ import React, { useState } from "react"
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragStartEvent,
   DragOverlay,
   PointerSensor,
   useSensor,
   useSensors,
-  closestCorners,
   rectIntersection,
 } from "@dnd-kit/core"
 import {
@@ -192,10 +190,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     return { allowedColumns, blockedColumns, reason }
   }
 
-  const handleTaskEdit = (task: Task) => {
-    setSelectedTask(task)
-  }
-
   const handleTaskMoveFromModal = (taskId: string, newStatus: string) => {
   logger.log(`Task status change requested: ${taskId} -> ${newStatus}`)
     
@@ -246,10 +240,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     onTaskMove(taskId, currentColumn.id, targetColumn.id, newPosition)
   }
   
-  const handleTaskDelete = (taskId: string) => {
-    onTaskDelete(taskId)
-  }
-
   return (
     <div className="w-full">
       <DndContext

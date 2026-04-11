@@ -17,11 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "../components/ui/dropdown-menu"
 import { boardsAPI } from "../services/api"
 import { useToast } from "../hooks/use-toast"
-import { useAuth } from "../contexts/AuthContext"
-import { Calendar, Users, CheckSquare, Clock, MoreVertical, Folder, RefreshCw, Sparkles, Target, Edit, Trash2, Copy, ExternalLink, Archive, ArchiveRestore, Eye, ArrowLeft, Filter } from 'lucide-react'
+import { Calendar, Users, CheckSquare, MoreVertical, Folder, RefreshCw, Sparkles, Target, Edit, Trash2, Copy, ExternalLink, Archive, ArchiveRestore, Eye, ArrowLeft } from 'lucide-react'
 
 const BoardsPage = () => {
-  const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
   const queryClient = useQueryClient()

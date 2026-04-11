@@ -206,7 +206,7 @@ export function TeamSidebar({
       return await teamsAPI.updateMemberRole(teamId, userId, role)
     },
     {
-      onSuccess: (data, variables) => {
+      onSuccess: (_data, variables) => {
         // Immediately update selectedTeam if it's the team being modified
         if (selectedTeam && selectedTeam.id === variables.teamId) {
           const updatedSelectedTeam = {
@@ -303,16 +303,6 @@ export function TeamSidebar({
   const canUserManageTeam = (team: Team, userId: string): boolean => {
     const role = getUserRoleInTeam(team, userId)
     return role === 'owner' || role === 'admin'
-  }
-
-  const canUserEditTasks = (team: Team, userId: string): boolean => {
-    const role = getUserRoleInTeam(team, userId)
-    return role === 'owner' || role === 'admin' || role === 'member'
-  }
-
-  const canUserCreateBoards = (team: Team, userId: string): boolean => {
-    const role = getUserRoleInTeam(team, userId)
-    return role === 'owner' || role === 'admin' || role === 'member'
   }
 
   const isViewerOnly = (team: Team, userId: string): boolean => {
@@ -476,9 +466,6 @@ export function TeamSidebar({
                       // Get the latest team data (updated roles if available)
                       const team = getLatestTeamData(originalTeam.id) || originalTeam
                       const colorConfig = getTeamColorConfig(team.color)
-                      const userCanManage =
-                        team.owner?.id === user?.id ||
-                        team.members?.some((member) => member.id === user?.id && member.role === "admin")
                       const isExpanded = expandedTeams.has(team.id)
                       const userRole = getUserRoleInTeam(team, user?.id || '')
                       const canManageThisTeam = canUserManageTeam(team, user?.id || '')

@@ -14,7 +14,6 @@ import { Separator } from "./ui/separator"
 import { useQuery, useMutation, useQueryClient } from "react-query"
 import { commentsAPI } from "../services/api"
 // SSE handled globally in App-level bridge
-import { useAuth } from "../contexts/AuthContext"
 import logger from "../lib/logger"
 
 interface Task {
@@ -59,7 +58,6 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
   const [replyOpenFor, setReplyOpenFor] = useState<string | null>(null)
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
   const queryClient = useQueryClient()
-  const { user } = useAuth()
 
   const toInputDate = (s?: string): string => {
     if (!s) return ""

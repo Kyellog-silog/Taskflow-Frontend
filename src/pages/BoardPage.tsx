@@ -12,7 +12,7 @@ import { boardsAPI, tasksAPI, teamsAPI } from "../services/api"
 import { useToast } from "../hooks/use-toast"
 import { useAuth } from "../contexts/AuthContext"
 import { useTaskOperations } from "../hooks/useTaskOperations"
-import { useMultiTeamPermissions, useTeamPermissions } from "../hooks/useTeamPermissions"
+import { useTeamPermissions } from "../hooks/useTeamPermissions"
 import webSocketService from "../services/websocket"
 import { Sparkles, Users, Target, Clock, ChevronLeft } from "lucide-react"
 import { Button } from "../components/ui/button"
@@ -45,6 +45,39 @@ interface Column {
   color?: string
 }
 
+const defaultColumns: Column[] = [
+  {
+    id: "todo",
+    title: "To Do",
+    tasks: [],
+    maxTasks: 15,
+    color: "blue-500",
+  },
+  {
+    id: "in-progress",
+    title: "In Progress",
+    tasks: [],
+    maxTasks: 8,
+    acceptsFrom: ["todo"],
+    color: "yellow-500",
+  },
+  {
+    id: "review",
+    title: "Review",
+    tasks: [],
+    maxTasks: 5,
+    acceptsFrom: ["in-progress"],
+    color: "purple-500",
+  },
+  {
+    id: "done",
+    title: "Done",
+    tasks: [],
+    acceptsFrom: ["review"],
+    color: "green-500",
+  },
+]
+
 const BoardPage: React.FC = () => {
   const { boardId } = useParams<{ boardId: string }>()
   const { toast } = useToast()
@@ -57,7 +90,6 @@ const BoardPage: React.FC = () => {
   const {
     handleTaskMove: enhancedHandleTaskMove,
     hasPendingOperations,
-    isLoading: isMoveLoading,
   } = useTaskOperations({ boardId })
 
   // WebSocket real-time sync - with graceful degradation
@@ -126,39 +158,6 @@ const BoardPage: React.FC = () => {
   // SSE moved to a global App-level bridge
   }, [boardId, user, hasPendingOperations, toast])
 
-  // Simplified default columns without locking
-  const defaultColumns: Column[] = [
-    {
-      id: "todo",
-      title: "To Do",
-      tasks: [],
-      maxTasks: 15,
-      color: "blue-500",
-    },
-    {
-      id: "in-progress",
-      title: "In Progress",
-      tasks: [],
-      maxTasks: 8,
-      acceptsFrom: ["todo"],
-      color: "yellow-500",
-    },
-    {
-      id: "review",
-      title: "Review",
-      tasks: [],
-      maxTasks: 5,
-      acceptsFrom: ["in-progress"],
-      color: "purple-500",
-    },
-    {
-      id: "done",
-      title: "Done",
-      tasks: [],
-      acceptsFrom: ["review"],
-      color: "green-500",
-    },
-  ]
 
   // Fetch board data (includes server-calculated permissions)
   const { data: board, isLoading: boardLoading } = useQuery(
@@ -181,7 +180,7 @@ const BoardPage: React.FC = () => {
   )
 
   // Fetch user's teams for team management
-  const { data: userTeams, isLoading: teamsLoading } = useQuery(
+  const { data: userTeams } = useQuery(
     ["user-teams", user?.id],
     async () => {
       const response = await teamsAPI.getTeams()
@@ -202,7 +201,7 @@ const BoardPage: React.FC = () => {
   )
 
   // Fetch board teams (teams already added to this board)
-  const { data: boardTeams, isLoading: boardTeamsLoading } = useQuery(
+  const { data: boardTeams } = useQuery(
     ["board-teams", boardId],
     async () => {
       const response = await boardsAPI.getBoardTeams(boardId!)

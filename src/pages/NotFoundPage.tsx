@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Home, ArrowLeft, Sparkles, Search, RefreshCw, Users, User, Settings, Folder } from 'lucide-react'
+import { Home, ArrowLeft, Sparkles, Search, Users, User, Settings, Folder } from 'lucide-react'
 
 const NotFoundPage = () => {
   const [mounted, setMounted] = useState(false)

@@ -33,7 +33,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
   }
 
   // Track pending operation
-  const addPendingOperation = (taskId: string, type: 'move' | 'update', data: any) => {
+  const addPendingOperation = useCallback((taskId: string, type: 'move' | 'update', data: any) => {
     const operationId = generateOperationId()
     const operation: PendingOperation = {
       id: operationId,
@@ -45,7 +45,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
     
     setPendingOperations(prev => new Map(prev).set(operationId, operation))
     return operationId
-  }
+  }, [])
 
   // Remove pending operation
   const removePendingOperation = (operationId: string) => {
@@ -192,7 +192,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
         clientTimestamp: now,
       })
     }, 80)
-  }, [moveTaskMutation, boardId, queryClient])
+  }, [moveTaskMutation, boardId, queryClient, addPendingOperation])
 
   return {
     handleTaskMove,

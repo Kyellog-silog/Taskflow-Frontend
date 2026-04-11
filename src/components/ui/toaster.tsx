@@ -8,7 +8,7 @@ export function Toaster() {
 
   return (
     <SonnerToaster
-      theme="light"
+      theme={theme as "light" | "dark" | "system"}
       className="toaster group"
       toastOptions={{
         classNames: {

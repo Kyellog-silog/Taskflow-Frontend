@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
 import { Alert, AlertDescription } from "../components/ui/alert"
-import { Loader2, Users, CheckCircle, XCircle, Mail } from "lucide-react"
+import { Loader2, Users, CheckCircle, XCircle } from "lucide-react"
 import { authAPI } from "../services/api"
 import logger from "../lib/logger"
 
@@ -43,11 +43,7 @@ export default function InvitePage() {
   const [name, setName] = useState("")
   const [isRegistering, setIsRegistering] = useState(false)
 
-  useEffect(() => {
-    fetchInvitationDetails()
-  }, [token])
-
-  const fetchInvitationDetails = async () => {
+  const fetchInvitationDetails = useCallback(async () => {
     if (!token) {
       setError("Invalid invitation link")
       setLoading(false)
@@ -69,14 +65,18 @@ export default function InvitePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
+
+  useEffect(() => {
+    fetchInvitationDetails()
+  }, [fetchInvitationDetails])
 
   const handleAcceptInvitation = async () => {
     if (!token) return
 
     setAccepting(true)
     try {
-      const response = await authAPI.acceptInvitation(token)
+      await authAPI.acceptInvitation(token)
       setSuccess(true)
       
       // Redirect to team dashboard after 2 seconds
