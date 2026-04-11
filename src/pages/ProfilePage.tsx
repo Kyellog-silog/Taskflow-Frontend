@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useQuery } from "react-query"
+import { useQuery, useMutation } from "react-query"
 import { API_BASE_URL, authAPI } from "../services/api"
 import { Header } from "../components/Header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
@@ -12,13 +12,15 @@ import { Badge } from "../components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
 import { useAuth } from "../contexts/AuthContext"
 import { useToast } from "../hooks/use-toast"
-import { User, Edit, Save, Camera, Award, Target, TrendingUp, Clock, Sparkles } from "lucide-react"
+import { User, Edit, Save, Camera, Award, Target, TrendingUp, Clock, Sparkles, Lock } from "lucide-react"
 
 const ProfilePage = () => {
   const { user, updateProfile, refreshUser } = useAuth()
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [passwordData, setPasswordData] = useState({ current_password: "", password: "", password_confirmation: "" })
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -49,17 +51,37 @@ const ProfilePage = () => {
     try {
       await updateProfile(profileData)
       setIsEditing(false)
-      toast({
-        title: "Profile Updated! ✨",
-        description: "Your profile has been successfully updated.",
-      })
+      toast({ title: "Profile Updated! ✨", description: "Your profile has been successfully updated." })
     } catch (error) {
-      toast({
-        title: "Update Failed",
-        description: "Failed to update profile. Please try again.",
-        variant: "destructive",
-      })
+      toast({ title: "Update Failed", description: "Failed to update profile. Please try again.", variant: "destructive" })
     }
+  }
+
+  const changePasswordMutation = useMutation(
+    () => authAPI.changePassword(passwordData.current_password, passwordData.password, passwordData.password_confirmation),
+    {
+      onSuccess: () => {
+        setPasswordData({ current_password: "", password: "", password_confirmation: "" })
+        setShowPasswordForm(false)
+        toast({ title: "Password Changed", description: "Your password has been updated successfully." })
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Password Change Failed",
+          description: error.response?.data?.message || "Please check your current password and try again.",
+          variant: "destructive",
+        })
+      },
+    }
+  )
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (passwordData.password !== passwordData.password_confirmation) {
+      toast({ title: "Passwords don't match", description: "New password and confirmation must match.", variant: "destructive" })
+      return
+    }
+    changePasswordMutation.mutate()
   }
 
   // Load stats from backend
@@ -253,26 +275,82 @@ const ProfilePage = () => {
                     <CardDescription>Manage your account security and password</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-                      <div className="flex items-center justify-between">
+                    {!showPasswordForm ? (
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-blue-100 rounded-full">
-                            <Sparkles className="h-5 w-5 text-blue-600" />
+                            <Lock className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <h3 className="font-bold text-blue-800">Coming Soon!</h3>
-                            <p className="text-sm text-blue-600">Password reset functionality will be available soon.</p>
+                            <h3 className="font-bold text-gray-800">Password</h3>
+                            <p className="text-sm text-gray-500">Update your account password</p>
                           </div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          className="border-blue-300 text-blue-600 hover:bg-blue-100"
-                          disabled
+                        <Button
+                          variant="outline"
+                          className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                          onClick={() => setShowPasswordForm(true)}
                         >
                           Change Password
                         </Button>
                       </div>
-                    </div>
+                    ) : (
+                      <form onSubmit={handleChangePassword} className="space-y-4">
+                        <div>
+                          <label className="text-sm font-bold text-gray-800 mb-2 block">Current Password</label>
+                          <Input
+                            type="password"
+                            value={passwordData.current_password}
+                            onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                            placeholder="Enter current password"
+                            className="bg-white border-2 border-gray-200 focus:border-blue-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-bold text-gray-800 mb-2 block">New Password</label>
+                          <Input
+                            type="password"
+                            value={passwordData.password}
+                            onChange={(e) => setPasswordData({ ...passwordData, password: e.target.value })}
+                            placeholder="Enter new password (min 8 characters)"
+                            className="bg-white border-2 border-gray-200 focus:border-blue-500"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-bold text-gray-800 mb-2 block">Confirm New Password</label>
+                          <Input
+                            type="password"
+                            value={passwordData.password_confirmation}
+                            onChange={(e) => setPasswordData({ ...passwordData, password_confirmation: e.target.value })}
+                            placeholder="Confirm new password"
+                            className="bg-white border-2 border-gray-200 focus:border-blue-500"
+                            required
+                          />
+                        </div>
+                        <div className="flex space-x-3">
+                          <Button
+                            type="submit"
+                            disabled={changePasswordMutation.isLoading}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                          >
+                            {changePasswordMutation.isLoading ? "Saving..." : "Save Password"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setShowPasswordForm(false)
+                              setPasswordData({ current_password: "", password: "", password_confirmation: "" })
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </form>
+                    )}
                   </CardContent>
                 </Card>
 

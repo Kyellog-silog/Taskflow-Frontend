@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "es6"],
+    "target": "es2017",
+    "lib": ["dom", "dom.iterable", "es2017"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -10,20 +10,19 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": "src",
     "paths": {
-      "@/*": ["*"],
-      "@/components/*": ["components/*"],
-      "@/services/*": ["services/*"],
-      "@/contexts/*": ["contexts/*"],
-      "@/hooks/*": ["hooks/*"],
-      "@/utils/*": ["utils/*"],
-      "@/types/*": ["types/*"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/services/*": ["./src/services/*"],
+      "@/contexts/*": ["./src/contexts/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/types/*": ["./src/types/*"]
     }
   },
   "include": ["src"]

@@ -100,16 +100,29 @@ const TeamsPage = () => {
       },
     )
 
-  // Handle team invitation
-  const handleInviteMember = async (teamId: string) => {
-    const email = prompt("Enter the email address of the person you want to invite:")
-    if (!email) return
+  // Invite member mutation
+  const inviteMemberMutation = useMutation(
+    ({ teamId, email }: { teamId: string; email: string }) => teamsAPI.inviteMember(teamId, email),
+    {
+      onSuccess: (_, variables) => {
+        toast({ title: "Invitation Sent!", description: `An invitation has been sent to ${variables.email}.` })
+      },
+      onError: (error: any) => {
+        toast({ title: "Error", description: error.response?.data?.message || "Failed to send invitation.", variant: "destructive" })
+      },
+    }
+  )
 
-    toast({
-      title: "Email Invites Coming Soon!",
-      description: "Email invitations are currently under development.",
-      variant: "default",
-    })
+  // Handle team invitation
+  const handleInviteMember = (teamId: string) => {
+    const email = prompt("Enter the email address to invite:")
+    if (!email?.trim()) return
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      toast({ title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive" })
+      return
+    }
+    inviteMemberMutation.mutate({ teamId, email })
   }
 
   const handleCreateTeam = (e: React.FormEvent) => {

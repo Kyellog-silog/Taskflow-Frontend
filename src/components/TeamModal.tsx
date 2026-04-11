@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from "react-query"
 import { useToast } from "../hooks/use-toast"
 import { teamsAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
+import { useState as useConfirmState } from "react"
 
 interface TeamMember {
   id: string
@@ -49,6 +50,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
   const [editedTeam, setEditedTeam] = useState<Team>(team)
   const [newMemberEmail, setNewMemberEmail] = useState("")
   const [activeTab, setActiveTab] = useState("overview")
+  const [confirmDelete, setConfirmDelete] = useConfirmState(false)
   const queryClient = useQueryClient()
   const { toast } = useToast()
   const { user } = useAuth()
@@ -64,27 +66,64 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
     mutationFn: ({ teamId, email }: { teamId: string; email: string }) =>
       teamsAPI.inviteMember(teamId, email),
     onSuccess: (response, variables) => {
-      // Show custom toast based on response message
       const isResend = response?.message?.includes('resent')
       toast({
         title: isResend ? "Invitation Resent!" : "Invitation Sent!",
-        description: isResend 
-          ? `A new invitation link has been sent to ${variables.email}` 
+        description: isResend
+          ? `A new invitation link has been sent to ${variables.email}`
           : `An invitation has been sent to ${variables.email}`,
       })
-      
-      // Clear the input after showing toast
       setNewMemberEmail("")
     },
     onError: (error: any) => {
-      // Only show error toast if not already handled by API
-      if (!error.response?.data?.message?.includes("toast")) {
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to send invitation",
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to send invitation",
+        variant: "destructive",
+      })
+    },
+  })
+
+  // Remove member mutation
+  const removeMemberMutation = useMutation({
+    mutationFn: ({ teamId, userId }: { teamId: string; userId: string }) =>
+      teamsAPI.removeMember(teamId, userId),
+    onSuccess: (_, variables) => {
+      toast({ title: "Member Removed", description: "The member has been removed from the team." })
+      setEditedTeam((prev) => ({
+        ...prev,
+        members: prev.members.filter((m) => m.id !== variables.userId),
+      }))
+      queryClient.invalidateQueries(["teams"])
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to remove member.", variant: "destructive" })
+    },
+  })
+
+  // Delete team mutation
+  const deleteTeamMutation = useMutation({
+    mutationFn: (teamId: string) => teamsAPI.deleteTeam(teamId),
+    onSuccess: () => {
+      toast({ title: "Team Deleted", description: "The team has been permanently deleted." })
+      queryClient.invalidateQueries(["teams"])
+      onClose()
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete team.", variant: "destructive" })
+    },
+  })
+
+  // Update team mutation
+  const updateTeamMutation = useMutation({
+    mutationFn: ({ teamId, data }: { teamId: string; data: any }) =>
+      teamsAPI.updateTeam(teamId, data),
+    onSuccess: () => {
+      toast({ title: "Team Updated", description: "Team settings saved successfully." })
+      queryClient.invalidateQueries(["teams"])
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update team.", variant: "destructive" })
     },
   })
 
@@ -134,23 +173,12 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
 
   const handleInviteMember = () => {
     if (!canManage || !newMemberEmail.trim()) return
-    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(newMemberEmail)) {
-      toast({
-        title: "Invalid Email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      })
+      toast({ title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive" })
       return
     }
-
-    toast({
-      title: "Email Invites Coming Soon!",
-      description: "Email invitations are currently under development.",
-      variant: "default",
-    })
-    setNewMemberEmail("")
+    inviteMemberMutation.mutate({ teamId: team.id, email: newMemberEmail })
   }
 
   useEffect(() => {
@@ -158,6 +186,10 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
   }, [team])
 
   const handleSave = () => {
+    updateTeamMutation.mutate({
+      teamId: team.id,
+      data: { name: editedTeam.name, description: editedTeam.description, color: editedTeam.color },
+    })
     onUpdate(editedTeam)
     onClose()
   }
@@ -418,8 +450,9 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:bg-red-50"
-                          disabled={!canManage || member.id === editedTeam.owner.id}
-                          title={!canManage ? "Only admins or the owner can remove members" : member.id === editedTeam.owner.id ? "Owner cannot be removed" : undefined}
+                          disabled={!canManage || member.id === editedTeam.owner.id || removeMemberMutation.isLoading}
+                          title={!canManage ? "Only admins or the owner can remove members" : member.id === editedTeam.owner.id ? "Owner cannot be removed" : "Remove member"}
+                          onClick={() => removeMemberMutation.mutate({ teamId: team.id, userId: member.id })}
                         >
                           <UserMinus className="h-4 w-4" />
                         </Button>
@@ -482,10 +515,31 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                       <p className="text-red-600 text-sm">
                         Once you delete a team, there is no going back. Please be certain.
                       </p>
-                      <Button variant="destructive" className="bg-gradient-to-r from-red-600 to-pink-600">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete Team
-                      </Button>
+                      {!confirmDelete ? (
+                        <Button
+                          variant="destructive"
+                          className="bg-gradient-to-r from-red-600 to-pink-600"
+                          onClick={() => setConfirmDelete(true)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Team
+                        </Button>
+                      ) : (
+                        <div className="flex items-center space-x-3">
+                          <p className="text-red-700 font-semibold text-sm">Are you sure?</p>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            disabled={deleteTeamMutation.isLoading}
+                            onClick={() => deleteTeamMutation.mutate(team.id)}
+                          >
+                            {deleteTeamMutation.isLoading ? "Deleting..." : "Yes, Delete"}
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                   )}

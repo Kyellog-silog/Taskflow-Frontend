@@ -10,8 +10,8 @@ const getCookie = (name: string): string | null => {
   return null
 }
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL || "https://taskflow-backend-production-1a6a.up.railway.app/api"
-export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL || "https://taskflow-backend-production-1a6a.up.railway.app" 
+export const API_BASE_URL = process.env.REACT_APP_API_URL
+export const SANCTUM_BASE_URL = process.env.REACT_APP_SANCTUM_URL 
 
 // Create axios instance for API calls
 const api = axios.create({
@@ -273,7 +273,7 @@ export const authAPI = {
   },
 
   login: async (email: string, password: string) => {
-    logger.log("Logging in user:", email)
+    logger.log("Logging in user")
     try {
       await authAPI.getCsrfCookie()
       const response = await api.post("/auth/login", { email, password })
@@ -293,7 +293,7 @@ export const authAPI = {
   },
 
   register: async (name: string, email: string, password: string, password_confirmation: string) => {
-    logger.log("Registering user:", email)
+    logger.log("Registering user")
     try {
       await authAPI.getCsrfCookie()
       
@@ -461,6 +461,25 @@ export const authAPI = {
       const response = await api.post(`/invitations/${token}/reject`)
       logger.log("Invitation rejected successfully")
 
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
+  changePassword: async (currentPassword: string, password: string, passwordConfirmation: string) => {
+    try {
+      await authAPI.getCsrfCookie()
+      const response = await api.post("/password/change", {
+        current_password: currentPassword,
+        password,
+        password_confirmation: passwordConfirmation,
+      })
+      safeToast({
+        title: "Password Changed",
+        description: "Your password has been updated successfully.",
+        variant: "default",
+      })
       return response.data
     } catch (error: any) {
       throw error

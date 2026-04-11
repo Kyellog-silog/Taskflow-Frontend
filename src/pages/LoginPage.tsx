@@ -9,6 +9,7 @@ import { useAuth } from "../contexts/AuthContext"
 import { useToast } from "../hooks/use-toast"
 import { Eye, EyeOff, LogIn, Sparkles, ArrowRight, Shield, Zap } from "lucide-react"
 import logger from "../lib/logger"
+import { authAPI } from "../services/api"
 
 const LoginPage = () => {
   const [email, setEmail] = useState("")
@@ -16,6 +17,9 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState("")
+  const [forgotLoading, setForgotLoading] = useState(false)
   const { user, login } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
@@ -28,6 +32,25 @@ const LoginPage = () => {
       navigate("/dashboard", { replace: true })
     }
   }, [user, navigate])
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotLoading(true)
+    try {
+      await authAPI.forgotPassword(forgotEmail)
+      toast({ title: "Reset link sent", description: "Check your email for a password reset link." })
+      setShowForgotPassword(false)
+      setForgotEmail("")
+    } catch (error: any) {
+      toast({
+        title: "Request failed",
+        description: error.response?.data?.message || "Could not send reset email. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setForgotLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: any) => {
     e.preventDefault()
@@ -183,16 +206,33 @@ const LoginPage = () => {
                   <button
                     type="button"
                     className="text-sm font-semibold text-blue-600 hover:text-purple-600 transition-colors duration-200 hover:underline"
-                    onClick={() => {
-                      toast({
-                        title: "Coming Soon!",
-                        description: "Password reset functionality will be available soon.",
-                      })
-                    }}
+                    onClick={() => setShowForgotPassword(!showForgotPassword)}
                   >
                     Forgot password?
                   </button>
                 </div>
+
+                {showForgotPassword && (
+                  <form onSubmit={handleForgotPassword} className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200 space-y-3">
+                    <p className="text-sm font-semibold text-blue-800">Enter your email to receive a reset link:</p>
+                    <Input
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                      className="bg-white border-2 border-blue-200 focus:border-blue-500"
+                    />
+                    <div className="flex space-x-2">
+                      <Button type="submit" disabled={forgotLoading} className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
+                        {forgotLoading ? "Sending..." : "Send Reset Link"}
+                      </Button>
+                      <Button type="button" variant="outline" className="text-sm" onClick={() => { setShowForgotPassword(false); setForgotEmail("") }}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </form>
+                )}
 
                 {/* Submit Button */}
                 <Button

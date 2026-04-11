@@ -244,6 +244,7 @@ const BoardPage: React.FC = () => {
     },
     {
       enabled: !!boardId,
+      staleTime: 30_000,
       onError: (error: any) => {
         toast({
           title: "Error",

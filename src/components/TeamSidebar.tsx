@@ -257,12 +257,12 @@ export function TeamSidebar({
 
   const handleInviteMember = (teamId: string) => {
     if (!newMemberEmail.trim()) return
-
-    toast({
-      title: "Email Invites Coming Soon!",
-      description: "Email invitations are currently under development.",
-      variant: "default",
-    })
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(newMemberEmail)) {
+      toast({ title: "Invalid Email", description: "Please enter a valid email address.", variant: "destructive" })
+      return
+    }
+    inviteMemberMutation.mutate({ teamId, email: newMemberEmail, role: newMemberRole })
     setNewMemberEmail("")
   }
 

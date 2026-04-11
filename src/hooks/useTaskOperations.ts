@@ -23,6 +23,8 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
   const [pendingOperations, setPendingOperations] = useState<Map<string, PendingOperation>>(new Map())
   const operationCounter = useRef(0)
   const lastMoveTime = useRef<Record<string, number>>({})
+  const debouncedMovesRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const rollbackDataRef = useRef<Record<string, any>>({})
 
   // Generate unique operation ID
   const generateOperationId = () => {
@@ -82,43 +84,45 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
     {
       onSuccess: (data, variables) => {
         removePendingOperation(variables.operationId)
-        
+        delete rollbackDataRef.current[variables.taskId]
+
         // Only update cache if no newer operations are pending for this task
         if (!hasPendingOperations(variables.taskId)) {
           queryClient.setQueryData(["tasks", boardId], (oldData: any) => {
             if (!oldData?.data) return oldData
-            
+
             return {
               ...oldData,
-              data: oldData.data.map((task: any) => 
+              data: oldData.data.map((task: any) =>
                 task.id === variables.taskId ? { ...task, ...data.data } : task
               )
             }
           })
         }
-
-        toast({
-          title: "Success",
-          description: "Task moved successfully! ✨",
-        })
       },
       onError: (error: any, variables) => {
         removePendingOperation(variables.operationId)
-        
+
+        // Restore the pre-move cache snapshot for instant rollback
+        const rollback = rollbackDataRef.current[variables.taskId]
+        if (rollback) {
+          queryClient.setQueryData(["tasks", boardId], rollback)
+          delete rollbackDataRef.current[variables.taskId]
+        } else {
+          queryClient.invalidateQueries(["tasks", boardId])
+        }
+
         // Handle conflicts gracefully
         if (error.response?.status === 409 && error.response?.data?.conflict) {
           const conflictData = error.response.data
           logger.log('Conflict detected:', conflictData)
-          
-          // If time difference is small (< 2 seconds), it's likely our own rapid moves
+
           if (conflictData.time_difference && conflictData.time_difference < 2000) {
-            // Don't show error for rapid moves, just refresh silently
             logger.log('Rapid move conflict, refreshing state silently')
             queryClient.invalidateQueries(["tasks", boardId])
             return
           }
-          
-          // Real conflict from another user
+
           toast({
             title: "Task Updated by Another User",
             description: "The task was moved by someone else. Refreshing...",
@@ -126,11 +130,6 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
           })
           queryClient.invalidateQueries(["tasks", boardId])
           return
-        }
-
-        // Handle network or other errors
-        if (!hasPendingOperations(variables.taskId)) {
-          queryClient.invalidateQueries(["tasks", boardId])
         }
 
         toast({
@@ -144,44 +143,56 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
 
   // Enhanced move handler with optimistic updates and operation tracking
   const handleTaskMove = useCallback((
-    taskId: string, 
-    sourceColumn: string, 
-    destColumn: string, 
+    taskId: string,
+    sourceColumn: string,
+    destColumn: string,
     position: number,
     optimisticUpdateFn: (taskId: string, sourceColumn: string, destColumn: string, position: number) => void
   ) => {
     const now = Date.now()
-    const lastMove = lastMoveTime.current[taskId] || 0
-    
-    // Rate limiting: prevent moves faster than 100ms for the same task
-    if (now - lastMove < 100) {
-      logger.log('Rate limiting: move too fast, skipping API call')
-      // Still do optimistic update for immediate UI feedback
-      optimisticUpdateFn(taskId, sourceColumn, destColumn, position)
-      return
-    }
-    
-    lastMoveTime.current[taskId] = now
-    
-    // Track this operation
-    const operationId = addPendingOperation(taskId, 'move', {
-      sourceColumn,
-      destColumn,
-      position
+
+    // 1. Cancel any in-flight refetches so they can't overwrite the optimistic state
+    queryClient.cancelQueries(["tasks", boardId])
+
+    // 2. Snapshot the cache BEFORE updating — used for rollback on error
+    rollbackDataRef.current[taskId] = queryClient.getQueryData(["tasks", boardId])
+
+    // 3. Immediately update the React Query cache (fixes navigation-revert bug)
+    queryClient.setQueryData(["tasks", boardId], (old: any) => {
+      if (!old?.data) return old
+      return {
+        ...old,
+        data: old.data.map((task: any) =>
+          task.id?.toString() === taskId
+            ? { ...task, column_id: destColumn }
+            : task
+        ),
+      }
     })
 
-    // Immediate optimistic update
+    // 4. Immediately update the local columns state (instant visual feedback)
     optimisticUpdateFn(taskId, sourceColumn, destColumn, position)
 
-    // Execute API call with operation tracking
-    moveTaskMutation.mutate({
-      taskId,
-      columnId: destColumn,
-      position,
-      operationId,
-      clientTimestamp: now
-    })
-  }, [moveTaskMutation])
+    // 5. Debounce the API call (80ms) — coalesces rapid moves of the same card
+    //    into one request, replacing the old skip-if-<100ms logic that lost moves
+    if (debouncedMovesRef.current[taskId]) {
+      clearTimeout(debouncedMovesRef.current[taskId])
+    }
+
+    lastMoveTime.current[taskId] = now
+    const operationId = addPendingOperation(taskId, 'move', { sourceColumn, destColumn, position })
+
+    debouncedMovesRef.current[taskId] = setTimeout(() => {
+      delete debouncedMovesRef.current[taskId]
+      moveTaskMutation.mutate({
+        taskId,
+        columnId: destColumn,
+        position,
+        operationId,
+        clientTimestamp: now,
+      })
+    }, 80)
+  }, [moveTaskMutation, boardId, queryClient])
 
   return {
     handleTaskMove,
