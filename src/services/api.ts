@@ -264,11 +264,27 @@ export const authAPI = {
     logger.log("Getting CSRF cookie from:", SANCTUM_BASE_URL)
     await sanctumApi.get("/sanctum/csrf-cookie")
     logger.log("CSRF cookie obtained")
-    
-    const csrfToken = getCookie('XSRF-TOKEN')
-    if (csrfToken) {
-      api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
-      logger.log("CSRF token set in headers")
+
+    // Try reading from document.cookie first (works for same-domain deployments).
+    const cookieToken = getCookie('XSRF-TOKEN')
+    if (cookieToken) {
+      api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(cookieToken)
+      logger.log("CSRF token set from cookie")
+      return
+    }
+
+    // Cross-domain fallback: the XSRF-TOKEN cookie belongs to the backend domain
+    // so JavaScript on the frontend domain cannot read it. Fetch the token as JSON
+    // instead — the same session cookie is sent with this GET request.
+    try {
+      const tokenResponse = await api.get("/csrf-token")
+      const token = tokenResponse.data.csrf_token
+      if (token) {
+        api.defaults.headers.common['X-XSRF-TOKEN'] = token
+        logger.log("CSRF token set from API response")
+      }
+    } catch (e) {
+      logger.warn("Could not fetch CSRF token from API:", e)
     }
   },
 
@@ -296,12 +312,6 @@ export const authAPI = {
     logger.log("Registering user")
     try {
       await authAPI.getCsrfCookie()
-      
-      const csrfToken = getCookie('XSRF-TOKEN')
-      if (csrfToken) {
-        api.defaults.headers.common['X-XSRF-TOKEN'] = decodeURIComponent(csrfToken)
-      }
-      
       const response = await api.post("/auth/register", {
         name,
         email,
