@@ -274,14 +274,15 @@ export const authAPI = {
     }
 
     // Cross-domain fallback: the XSRF-TOKEN cookie belongs to the backend domain
-    // so JavaScript on the frontend domain cannot read it. Fetch the token as JSON
-    // instead — the same session cookie is sent with this GET request.
+    // so JavaScript on the frontend domain cannot read it. Fetch the raw token
+    // as JSON and send it as X-CSRF-TOKEN (accepted plain, no decryption needed).
     try {
       const tokenResponse = await api.get("/csrf-token")
       const token = tokenResponse.data.csrf_token
       if (token) {
-        api.defaults.headers.common['X-XSRF-TOKEN'] = token
-        logger.log("CSRF token set from API response")
+        api.defaults.headers.common['X-CSRF-TOKEN'] = token
+        delete api.defaults.headers.common['X-XSRF-TOKEN']
+        logger.log("CSRF token set from API response (X-CSRF-TOKEN)")
       }
     } catch (e) {
       logger.warn("Could not fetch CSRF token from API:", e)
