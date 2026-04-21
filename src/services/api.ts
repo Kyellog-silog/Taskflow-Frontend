@@ -37,6 +37,7 @@ const sanctumApi = axios.create({
 
 // Global toast handler
 let globalToast: any = null
+let isRedirectingToLogin = false
 
 export const setGlobalToast = (toast: any) => {
   globalToast = toast
@@ -55,6 +56,12 @@ api.interceptors.request.use(
   (config) => {
     const startTime = performance.now()
     ;(config as any).startTime = startTime
+
+    const token = localStorage.getItem("token")
+    if (token) {
+      config.headers = config.headers || {}
+      config.headers["Authorization"] = `Bearer ${token}`
+    }
 
     if (logger.isDev) logger.log(`Making ${config.method?.toUpperCase()} request to:`, config.url)
     return config
@@ -92,16 +99,20 @@ api.interceptors.response.use(
 
     switch (status) {
       case 401:
-        safeToast({
-          title: "Session Expired",
-          description: "Please log in again to continue.",
-          variant: "destructive",
-        })
-        const currentPath = window.location.pathname
-        if (currentPath !== "/login" && currentPath !== "/register") {
-          localStorage.setItem("redirectPath", currentPath)
-        }
         localStorage.removeItem("token")
+        if (!isRedirectingToLogin) {
+          const currentPath = window.location.pathname
+          if (currentPath !== "/login" && currentPath !== "/register") {
+            isRedirectingToLogin = true
+            safeToast({
+              title: "Session Expired",
+              description: "Please log in again to continue.",
+              variant: "destructive",
+            })
+            localStorage.setItem("redirectPath", currentPath)
+            window.location.href = "/login"
+          }
+        }
         break
 
       case 403:
@@ -296,6 +307,11 @@ export const authAPI = {
       const response = await api.post("/auth/login", { email, password })
       logger.log("Login successful")
 
+      const token = response.data?.data?.token
+      if (token) {
+        localStorage.setItem("token", token)
+      }
+
       // Success toast
       safeToast({
         title: "Welcome back!",
@@ -321,7 +337,11 @@ export const authAPI = {
       })
       logger.log("Registration successful")
 
-      // Success toast
+      const token = response.data?.data?.token
+      if (token) {
+        localStorage.setItem("token", token)
+      }
+
       safeToast({
         title: "Account Created!",
         description: "Your account has been successfully created. Welcome to TaskFlow!",
@@ -337,11 +357,9 @@ export const authAPI = {
   logout: async () => {
     logger.log("Logging out user")
     try {
-      await authAPI.getCsrfCookie()
       const response = await api.post("/auth/logout")
       logger.log("Logout successful")
 
-      // Success toast
       safeToast({
         title: "Logged Out",
         description: "You have been successfully logged out. See you next time!",
@@ -352,6 +370,8 @@ export const authAPI = {
     } catch (error: any) {
       logger.warn("Logout request failed but continuing with local logout")
       return {}
+    } finally {
+      localStorage.removeItem("token")
     }
   },
 

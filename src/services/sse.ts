@@ -10,7 +10,11 @@ class SSEClient {
   connect(handlers: Record<string, (payload: any) => void>) {
     if (this.es) return
     try {
-      this.es = new EventSource(this.url, { withCredentials: true })
+      const token = localStorage.getItem("token")
+      const urlWithToken = token
+        ? `${this.url}${this.url.includes("?") ? "&" : "?"}api_token=${encodeURIComponent(token)}`
+        : this.url
+      this.es = new EventSource(urlWithToken, { withCredentials: false })
 
       const safeOn = (event: string, cb: (payload: any) => void) => {
         this.es!.addEventListener(event, (evt: MessageEvent) => {
