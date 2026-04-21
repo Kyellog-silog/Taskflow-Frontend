@@ -4,10 +4,10 @@ import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { useAuth } from "../contexts/AuthContext"
 import { useToast } from "../hooks/use-toast"
-import { Eye, EyeOff, LogIn, Sparkles, ArrowRight, Shield, Zap } from "lucide-react"
+import { Eye, EyeOff, LogIn, ArrowRight, Shield, Zap } from "lucide-react"
+import { Logo } from "../components/Logo"
 import logger from "../lib/logger"
 import { authAPI } from "../services/api"
 
@@ -26,7 +26,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     setMounted(true)
-    logger.log("🔍 LoginPage useEffect - user:", user);
+    logger.log("🔍 LoginPage useEffect - user:", user)
     if (user) {
       logger.log("✅ User found in LoginPage, redirecting to dashboard:", user)
       navigate("/dashboard", { replace: true })
@@ -52,30 +52,23 @@ const LoginPage = () => {
     }
   }
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-
     try {
-      logger.log("🚀 Attempting login...");
+      logger.log("🚀 Attempting login...")
       await login(email, password)
-      logger.log("✅ Login function completed successfully");
-
-      toast({
-        title: "Welcome back! 🎉",
-        description: "Successfully signed in to TaskFlow",
-      })
-
-      logger.log("🕒 Setting 100ms timeout for navigation...");
+      logger.log("✅ Login function completed successfully")
+      toast({ title: "Welcome back!", description: "Successfully signed in to TaskFlow." })
       setTimeout(() => {
-        logger.log("⏰ Timeout expired, navigating to dashboard...");
+        logger.log("⏰ Navigating to dashboard...")
         navigate("/dashboard", { replace: true })
       }, 100)
     } catch (error: any) {
       logger.error("❌ Login failed:", error)
       toast({
         title: "Sign in failed",
-        description: error.response?.data?.message || error.message || "Please check your credentials",
+        description: error.response?.data?.message || error.message || "Please check your credentials and try again.",
         variant: "destructive",
       })
     } finally {
@@ -84,208 +77,201 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400 to-pink-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-10 animate-spin"
-          style={{ animationDuration: "20s" }}
-        ></div>
+    <div className="min-h-screen bg-[#050816] flex">
+      {/* Left panel — branding */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 bg-gradient-to-br from-violet-950/80 via-[#080d1f] to-[#050816] border-r border-white/[0.06]">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div className="absolute top-1/3 left-1/3 w-80 h-80 rounded-full bg-violet-600 opacity-10 blur-[80px]" />
+        </div>
+        <Link to="/" aria-label="Back to home">
+          <Logo size={36} showText />
+        </Link>
+        <div className="relative z-10 space-y-8">
+          <blockquote>
+            <p className="text-2xl font-semibold text-white leading-snug">
+              "TaskFlow cut our sprint planning time in half. The drag-and-drop is buttery smooth."
+            </p>
+            <footer className="mt-4 text-slate-400 text-sm">— A happy team lead</footer>
+          </blockquote>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { icon: Zap, label: "Lightning-fast boards" },
+              { icon: Shield, label: "Secure by default" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-3 text-slate-400 text-sm">
+                <div className="w-8 h-8 rounded-lg bg-violet-600/20 flex items-center justify-center flex-shrink-0">
+                  <Icon className="h-4 w-4 text-violet-400" aria-hidden="true" />
+                </div>
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="relative text-xs text-slate-600">
+          &copy; {new Date().getFullYear()} <span translate="no">TaskFlow</span>
+        </p>
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Right panel — form */}
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-16">
         <div
-          className={`max-w-md w-full space-y-8 transform transition-all duration-1000 ${mounted ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}`}
+          className={`w-full max-w-md transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
         >
-          {/* Header */}
-          <div className="text-center">
-            <div className="mx-auto h-16 w-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all duration-300 hover:rotate-3">
-              <span className="text-white font-bold text-2xl">TF</span>
-            </div>
-            <h2 className="mt-6 text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Welcome Back
-            </h2>
-            <p className="mt-3 text-lg text-gray-600">Sign in to continue your productivity journey</p>
-            <p className="mt-2 text-sm text-gray-500">
-              Don't have an account?{" "}
+          {/* Mobile logo */}
+          <div className="lg:hidden mb-8 flex justify-center">
+            <Link to="/" aria-label="Back to home">
+              <Logo size={32} showText />
+            </Link>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-white">Welcome back</h1>
+            <p className="mt-2 text-slate-400 text-sm">
+              Sign in to continue to your workspace.{" "}
               <Link
                 to="/register"
-                className="font-semibold text-blue-600 hover:text-purple-600 transition-colors duration-200 hover:underline"
+                className="text-violet-400 hover:text-violet-300 font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
               >
-                Create one now →
+                Don't have an account?
               </Link>
             </p>
           </div>
 
-          {/* Login Card */}
-          <Card className="bg-white/80 backdrop-blur-xl border-2 border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-1">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center space-x-2">
-                <Shield className="h-6 w-6 text-blue-500" />
-                <span>Secure Sign In</span>
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                Enter your credentials to access your workspace
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
-                <div className="group">
-                  <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="bg-white/50 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300 text-gray-900 placeholder:text-gray-500 group-hover:border-blue-300"
-                    />
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <div className="h-2 w-2 bg-blue-500 rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                  </div>
-                </div>
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                Email Address
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com…"
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-violet-500 focus-visible:border-violet-500"
+              />
+            </div>
 
-                {/* Password Field */}
-                <div className="group">
-                  <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="current-password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      className="bg-white/50 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-200 transition-all duration-300 text-gray-900 placeholder:text-gray-500 pr-12 group-hover:border-blue-300"
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-blue-50 rounded-r-md transition-colors duration-200"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-blue-500 transition-colors duration-200" />
-                      ) : (
-                        <Eye className="h-5 w-5 text-gray-400 hover:text-blue-500 transition-colors duration-200" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center group">
-                    <input
-                      id="remember-me"
-                      name="remember-me"
-                      type="checkbox"
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded transition-all duration-200 group-hover:border-blue-400"
-                    />
-                    <label
-                      htmlFor="remember-me"
-                      className="ml-2 block text-sm text-gray-700 group-hover:text-blue-600 transition-colors duration-200"
-                    >
-                      Remember me
-                    </label>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="text-sm font-semibold text-blue-600 hover:text-purple-600 transition-colors duration-200 hover:underline"
-                    onClick={() => setShowForgotPassword(!showForgotPassword)}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                {showForgotPassword && (
-                  <form onSubmit={handleForgotPassword} className="p-4 bg-blue-50 rounded-lg border-2 border-blue-200 space-y-3">
-                    <p className="text-sm font-semibold text-blue-800">Enter your email to receive a reset link:</p>
-                    <Input
-                      type="email"
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      required
-                      className="bg-white border-2 border-blue-200 focus:border-blue-500"
-                    />
-                    <div className="flex space-x-2">
-                      <Button type="submit" disabled={forgotLoading} className="bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                        {forgotLoading ? "Sending..." : "Send Reset Link"}
-                      </Button>
-                      <Button type="button" variant="outline" className="text-sm" onClick={() => { setShowForgotPassword(false); setForgotEmail("") }}>
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                )}
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                  disabled={isLoading}
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-slate-300">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                  onClick={() => setShowForgotPassword((v) => !v)}
                 >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                      <span>Signing you in...</span>
-                      <Sparkles className="h-4 w-4 ml-2 animate-pulse" />
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center">
-                      <LogIn className="h-5 w-5 mr-2" />
-                      <span>Sign In</span>
-                      <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                    </div>
-                  )}
-                </Button>
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Your password…"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-violet-500 focus-visible:border-violet-500 pr-11"
+                  spellCheck={false}
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none"
+                  onClick={() => setShowPassword((v) => !v)}
+                >
+                  {showPassword
+                    ? <EyeOff className="h-4 w-4" aria-hidden="true" />
+                    : <Eye className="h-4 w-4" aria-hidden="true" />}
+                </button>
+              </div>
+            </div>
 
-                {/* Features Preview */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <p className="text-center text-sm text-gray-600 mb-4">What you'll get access to:</p>
-                  <div className="grid grid-cols-2 gap-3 text-xs">
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Zap className="h-4 w-4 text-blue-500" />
-                      <span>Lightning-fast boards</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-gray-600">
-                      <Shield className="h-4 w-4 text-green-500" />
-                      <span>Secure collaboration</span>
-                    </div>
-                  </div>
+            {/* Forgot password inline */}
+            {showForgotPassword && (
+              <form
+                onSubmit={handleForgotPassword}
+                className="p-4 rounded-xl bg-violet-900/20 border border-violet-500/20 space-y-3"
+              >
+                <p className="text-sm text-slate-300 font-medium">Enter your email to receive a reset link:</p>
+                <Input
+                  type="email"
+                  autoComplete="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  placeholder="you@example.com…"
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-violet-500"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="bg-violet-600 hover:bg-violet-500 text-white text-sm"
+                  >
+                    {forgotLoading ? "Sending…" : "Send Reset Link"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="text-sm border-white/10 text-slate-300 hover:bg-white/5"
+                    onClick={() => { setShowForgotPassword(false); setForgotEmail("") }}
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-gray-500">
-              By signing in, you agree to our{" "}
-              <button className="text-blue-600 hover:text-purple-600 transition-colors duration-200 underline">
-                Terms of Service
-              </button>{" "}
-              and{" "}
-              <button className="text-blue-600 hover:text-purple-600 transition-colors duration-200 underline">
-                Privacy Policy
-              </button>
-            </p>
-          </div>
+            {/* Remember me */}
+            <div className="flex items-center gap-2">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 rounded border-white/20 bg-white/5 text-violet-600 focus:ring-violet-500 focus:ring-offset-0"
+              />
+              <label htmlFor="remember-me" className="text-sm text-slate-400">
+                Remember me
+              </label>
+            </div>
+
+            {/* Submit */}
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-violet-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050816]"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" aria-hidden="true" />
+                  Signing you in…
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <LogIn className="h-4 w-4" aria-hidden="true" />
+                  Sign In
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              )}
+            </Button>
+          </form>
+
+          <p className="mt-8 text-center text-xs text-slate-600">
+            By signing in you agree to our{" "}
+            <button className="text-slate-500 hover:text-slate-400 underline transition-colors">Terms of Service</button>
+            {" "}and{" "}
+            <button className="text-slate-500 hover:text-slate-400 underline transition-colors">Privacy Policy</button>
+          </p>
         </div>
       </div>
     </div>

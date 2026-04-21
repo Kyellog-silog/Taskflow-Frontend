@@ -17,6 +17,9 @@ import SSEClient from "./services/sse"
 import { API_BASE_URL } from "./services/api"
 
 // Pages
+import LandingPage from "./pages/LandingPage"
+import AboutPage from "./pages/AboutPage"
+import ContactPage from "./pages/ContactPage"
 import LoginPage from "./pages/LoginPage"
 import RegisterPage from "./pages/RegisterPage"
 import InvitePage from "./pages/InvitePage"
@@ -190,7 +193,12 @@ function App() {
                   <Toaster />
                   <SSEBridge />
                   <Routes>
-                    {/* Public Routes */}
+                    {/* Marketing / public pages */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+
+                    {/* Auth routes — redirect to dashboard if already logged in */}
                     <Route
                       path="/login"
                       element={
@@ -210,16 +218,6 @@ function App() {
                     <Route
                       path="/invite/:token"
                       element={<InvitePage />}
-                    />
-
-                    {/* Protected Routes */}
-                    <Route
-                      path="/"
-                      element={
-                        <ProtectedRoute>
-                          <Navigate to="/dashboard" replace />
-                        </ProtectedRoute>
-                      }
                     />
                     <Route
                       path="/dashboard"
