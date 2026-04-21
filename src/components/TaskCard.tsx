@@ -40,31 +40,27 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
       switch (priority) {
         case "high":
           return {
-            color: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
+            badge: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
             icon: "🔥",
-            border: "border-red-200",
-            bg: "bg-red-50"
+            leftBorder: "border-l-red-500",
           }
         case "medium":
           return {
-            color: "bg-gradient-to-r from-yellow-500 to-orange-500 text-white",
+            badge: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
             icon: "⚡",
-            border: "border-yellow-200",
-            bg: "bg-yellow-50"
+            leftBorder: "border-l-amber-500",
           }
         case "low":
           return {
-            color: "bg-gradient-to-r from-green-500 to-emerald-500 text-white",
+            badge: "bg-gradient-to-r from-emerald-500 to-green-500 text-white",
             icon: "🌱",
-            border: "border-green-200",
-            bg: "bg-green-50"
+            leftBorder: "border-l-emerald-500",
           }
         default:
           return {
-            color: "bg-gradient-to-r from-gray-500 to-slate-500 text-white",
+            badge: "bg-gradient-to-r from-slate-500 to-slate-600 text-white",
             icon: "📋",
-            border: "border-gray-200",
-            bg: "bg-gray-50"
+            leftBorder: "border-l-slate-500",
           }
       }
     }
@@ -72,16 +68,14 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
     const priorityConfig = getPriorityConfig(task.priority)
 
     const getCardStyle = () => {
-      let style = "group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-l-4 bg-gradient-to-br from-white to-gray-50 relative overflow-hidden"
+      let style = `group bg-[#0d1224] hover:bg-[#111827] border border-white/[0.06] hover:border-white/[0.10] border-l-2 ${priorityConfig.leftBorder} rounded-xl transition-all duration-200 relative overflow-hidden`
 
       if (isDragging) {
-        style += " shadow-2xl rotate-2 scale-105 ring-4 ring-blue-200 bg-gradient-to-br from-blue-50 to-white z-50"
+        style += " shadow-2xl rotate-2 scale-105 ring-1 ring-violet-500/40"
       }
 
-      style += ` ${priorityConfig.border}`
-
       if (showConstraints) {
-        style += " ring-2 ring-orange-300 bg-gradient-to-br from-orange-50 to-yellow-50"
+        style += " ring-1 ring-amber-500/30"
       }
 
       return style
@@ -91,43 +85,43 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
 
     return (
       <Card ref={ref} className={getCardStyle()} {...props}>
-
-        <CardContent className="p-4 pl-8 space-y-3">
+        <CardContent className="p-4 space-y-3">
           {/* Header with title and actions */}
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-2 flex-1 min-w-0">
-              <div className="text-lg">{priorityConfig.icon}</div>
-              <h3 className="font-semibold text-sm text-gray-900 line-clamp-2 flex-1 group-hover:text-blue-600 transition-colors">
+              <div className="text-base leading-none mt-0.5">{priorityConfig.icon}</div>
+              <h3 className="font-semibold text-sm text-white line-clamp-2 flex-1 group-hover:text-violet-300 transition-colors">
                 {task.title}
               </h3>
             </div>
-            
+
             {/* 3-Dot Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100 rounded-full" 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Task options"
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10 rounded-lg"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreHorizontal className="h-4 w-4 text-gray-700" />
+                  <MoreHorizontal className="h-4 w-4 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-white border-2 border-gray-200 shadow-xl rounded-xl">
-                <DropdownMenuItem 
-                  className="text-blue-600 hover:bg-blue-50 cursor-pointer rounded-lg mx-1 my-1"
+              <DropdownMenuContent align="end" className="w-44 bg-[#0d1224] border border-white/10 shadow-xl rounded-xl">
+                <DropdownMenuItem
+                  className="text-slate-300 hover:text-white hover:bg-white/5 cursor-pointer rounded-lg mx-1 my-1 focus:bg-white/5 focus:text-white"
                   onClick={(e) => {
                     e.stopPropagation()
                     onEdit?.()
                   }}
                 >
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="h-4 w-4 mr-2 text-violet-400" />
                   Edit Task
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-200" />
-                <DropdownMenuItem 
-                  className="text-red-600 hover:bg-red-50 cursor-pointer rounded-lg mx-1 my-1"
+                <DropdownMenuSeparator className="bg-white/[0.06]" />
+                <DropdownMenuItem
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer rounded-lg mx-1 my-1 focus:bg-red-500/10 focus:text-red-300"
                   onClick={(e) => {
                     e.stopPropagation()
                     onDelete?.()
@@ -142,36 +136,35 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
 
           {/* Description */}
           {task.description && (
-            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
               {task.description}
             </p>
           )}
 
           {/* Constraint warning */}
           {showConstraints && constraintReason && (
-            <div className="flex items-center space-x-2 p-2 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-lg text-xs text-orange-800 border border-orange-200">
+            <div className="flex items-center space-x-2 p-2 bg-amber-500/10 rounded-lg text-xs text-amber-400 border border-amber-500/20">
               <AlertCircle className="h-3 w-3 flex-shrink-0" />
               <span className="font-medium">{constraintReason}</span>
             </div>
           )}
 
-          {/* Priority badge */}
+          {/* Priority badge + metadata */}
           <div className="flex items-center justify-between">
-            <Badge className={`${priorityConfig.color} text-xs font-semibold px-2 py-1 shadow-sm`}>
+            <Badge className={`${priorityConfig.badge} text-xs font-semibold px-2 py-0.5 border-0`}>
               {task.priority.toUpperCase()}
             </Badge>
-            
-            {/* Metadata */}
-            <div className="flex items-center space-x-3 text-xs text-gray-500">
+
+            <div className="flex items-center space-x-3 text-xs text-slate-500">
               {task.dueDate && (
-                <div className={`flex items-center space-x-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                <div className={`flex items-center space-x-1 ${isOverdue ? 'text-red-400 font-medium' : ''}`}>
                   <Calendar className="h-3 w-3" />
                   <span>{new Date(task.dueDate).toLocaleDateString()}</span>
-                  {isOverdue && <Clock className="h-3 w-3 text-red-500" />}
+                  {isOverdue && <Clock className="h-3 w-3" />}
                 </div>
               )}
               {task.comments.length > 0 && (
-                <div className="flex items-center space-x-1 text-blue-600">
+                <div className="flex items-center space-x-1 text-violet-400">
                   <MessageSquare className="h-3 w-3" />
                   <span className="font-medium">{task.comments.length}</span>
                 </div>
@@ -180,30 +173,30 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
           </div>
 
           {/* Assignee */}
-          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]">
             <div className="flex items-center space-x-2">
-              <Avatar className="h-6 w-6 ring-2 ring-white shadow-sm">
+              <Avatar className="h-6 w-6 ring-1 ring-white/10">
                 <AvatarImage src={task.assignee?.avatar || "/placeholder.svg"} />
-                <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white">
+                <AvatarFallback className="text-xs bg-gradient-to-br from-violet-500 to-purple-600 text-white">
                   {task.assignee?.name
                     ?.split(" ")
                     .map((n) => n[0])
                     .join("") || "NA"}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs font-medium text-gray-700">
+              <span className="text-xs font-medium text-slate-300">
                 {task.assignee?.name || "Unassigned"}
               </span>
             </div>
-            
+
             {/* Task ID */}
-            <span className="text-xs text-gray-400 font-mono">#{task.id.slice(-4)}</span>
+            <span className="text-xs text-slate-600 font-mono">#{task.id.slice(-4)}</span>
           </div>
 
           {/* Movement restrictions indicator */}
           {task.canMoveTo && task.canMoveTo.length > 0 && (
-            <div className="text-xs text-gray-500 bg-blue-50 p-2 rounded border border-blue-200">
-              <span className="font-medium text-blue-700">Restricted:</span> Can only move to {task.canMoveTo.join(", ")}
+            <div className="text-xs text-violet-400 bg-violet-500/10 p-2 rounded-lg border border-violet-500/20">
+              <span className="font-medium">Restricted:</span> Can only move to {task.canMoveTo.join(", ")}
             </div>
           )}
         </CardContent>

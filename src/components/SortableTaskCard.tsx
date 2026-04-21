@@ -72,7 +72,7 @@ export const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
     }
 
     if (isOver) {
-      className += " ring-2 ring-blue-400 ring-opacity-50"
+      className += " ring-1 ring-violet-500/50"
     }
 
     // Add glow effect when dragging
@@ -102,7 +102,7 @@ export const SortableTaskCard: React.FC<SortableTaskCardProps> = ({
       
       {/* Drag overlay effect */}
       {isDragging && (
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-lg pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 to-purple-500/5 rounded-xl pointer-events-none"></div>
       )}
     </div>
   )

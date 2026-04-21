@@ -5,7 +5,6 @@ import { useDroppable } from "@dnd-kit/core"
 import { Plus, AlertTriangle, Users, Sparkles, Target } from 'lucide-react'
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
-// Removed unused Card components
 
 interface Column {
   id: string
@@ -53,156 +52,136 @@ export function DroppableColumn({
   const getColumnConfig = () => {
     const configs = {
       'todo': {
-        gradient: 'from-blue-500 to-cyan-500',
-        bgGradient: 'from-blue-50 to-cyan-50',
-        borderColor: 'border-blue-200',
+        headerGradient: 'from-violet-500/10 to-blue-500/5',
+        topBorderColor: 'border-t-violet-500/50',
         icon: '📋',
-        accentColor: 'text-blue-600'
+        accentColor: 'text-violet-400',
+        badgeBg: 'bg-violet-500/15 text-violet-300',
+        addTaskHover: 'hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-300',
+        dropAllowedBg: 'bg-violet-500/10',
+        dropAllowedBorder: 'border-violet-500/40 text-violet-300',
       },
       'in-progress': {
-        gradient: 'from-yellow-500 to-orange-500',
-        bgGradient: 'from-yellow-50 to-orange-50',
-        borderColor: 'border-yellow-200',
+        headerGradient: 'from-amber-500/10 to-orange-500/5',
+        topBorderColor: 'border-t-amber-500/50',
         icon: '⚡',
-        accentColor: 'text-yellow-600'
+        accentColor: 'text-amber-400',
+        badgeBg: 'bg-amber-500/15 text-amber-300',
+        addTaskHover: 'hover:border-amber-500/40 hover:bg-amber-500/10 hover:text-amber-300',
+        dropAllowedBg: 'bg-amber-500/10',
+        dropAllowedBorder: 'border-amber-500/40 text-amber-300',
       },
       'review': {
-        gradient: 'from-purple-500 to-pink-500',
-        bgGradient: 'from-purple-50 to-pink-50',
-        borderColor: 'border-purple-200',
+        headerGradient: 'from-purple-500/10 to-pink-500/5',
+        topBorderColor: 'border-t-purple-500/50',
         icon: '👀',
-        accentColor: 'text-purple-600'
+        accentColor: 'text-purple-400',
+        badgeBg: 'bg-purple-500/15 text-purple-300',
+        addTaskHover: 'hover:border-purple-500/40 hover:bg-purple-500/10 hover:text-purple-300',
+        dropAllowedBg: 'bg-purple-500/10',
+        dropAllowedBorder: 'border-purple-500/40 text-purple-300',
       },
       'done': {
-        gradient: 'from-green-500 to-emerald-500',
-        bgGradient: 'from-green-50 to-emerald-50',
-        borderColor: 'border-green-200',
+        headerGradient: 'from-emerald-500/10 to-teal-500/5',
+        topBorderColor: 'border-t-emerald-500/50',
         icon: '✅',
-        accentColor: 'text-green-600'
+        accentColor: 'text-emerald-400',
+        badgeBg: 'bg-emerald-500/15 text-emerald-300',
+        addTaskHover: 'hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-300',
+        dropAllowedBg: 'bg-emerald-500/10',
+        dropAllowedBorder: 'border-emerald-500/40 text-emerald-300',
       }
     }
-    
-    // If column has custom color, use that instead
+
+    // Custom color fallback maps to matching config
     if (column.color) {
-      const colorMap: { [key: string]: any } = {
-        'blue-500': {
-          gradient: 'from-blue-500 to-blue-600',
-          bgGradient: 'from-blue-50 to-blue-100',
-          borderColor: 'border-blue-200',
-          accentColor: 'text-blue-600'
-        },
-        'yellow-500': {
-          gradient: 'from-yellow-500 to-orange-500',
-          bgGradient: 'from-yellow-50 to-orange-50',
-          borderColor: 'border-yellow-200',
-          accentColor: 'text-yellow-600'
-        },
-        'purple-500': {
-          gradient: 'from-purple-500 to-pink-500',
-          bgGradient: 'from-purple-50 to-pink-50',
-          borderColor: 'border-purple-200',
-          accentColor: 'text-purple-600'
-        },
-        'green-500': {
-          gradient: 'from-green-500 to-emerald-500',
-          bgGradient: 'from-green-50 to-emerald-50',
-          borderColor: 'border-green-200',
-          accentColor: 'text-green-600'
-        }
-      };
-      
-      return colorMap[column.color] || configs.todo;
+      const colorMap: { [key: string]: keyof typeof configs } = {
+        'blue-500': 'todo',
+        'yellow-500': 'in-progress',
+        'purple-500': 'review',
+        'green-500': 'done',
+      }
+      const mappedKey = colorMap[column.color]
+      if (mappedKey) return configs[mappedKey]
     }
-    
-    return configs[column.id as keyof typeof configs] || configs.todo
+
+    return configs[column.id as keyof typeof configs] || configs['todo']
   }
 
   const config = getColumnConfig()
 
   const getColumnStyle = () => {
-    let baseStyle = `bg-gradient-to-br ${config.bgGradient} rounded-xl shadow-sm border-2 transition-all duration-300 hover:shadow-lg ${config.borderColor}`
+    let baseStyle = `bg-[#0a0f1e] rounded-xl border-t-2 border border-white/[0.06] ${config.topBorderColor} transition-all duration-300`
 
     if (isOver && isAllowed && !isBlocked) {
-      baseStyle += " ring-4 ring-blue-300 ring-opacity-50 shadow-xl scale-105 bg-gradient-to-br from-blue-50 to-indigo-50"
+      baseStyle += " ring-1 ring-violet-500/40 border-violet-500/20"
     } else if (isOver && isBlocked) {
-      baseStyle += " ring-4 ring-red-300 ring-opacity-50 shadow-xl bg-gradient-to-br from-red-50 to-pink-50"
+      baseStyle += " ring-1 ring-red-500/40 border-red-500/20"
     } else if (isBlocked && dragConstraints.allowedColumns.length > 0) {
-      baseStyle += " opacity-60 grayscale"
+      baseStyle += " opacity-50"
     }
 
     if (active) {
-      baseStyle += " transform transition-transform duration-200"
+      baseStyle += " transition-transform duration-200"
     }
 
     return baseStyle
   }
 
-  const getHeaderStyle = () => {
-    return `p-4 rounded-t-xl bg-gradient-to-r ${config.gradient} text-white relative overflow-hidden`
-  }
-
   const getCapacityColor = () => {
-    if (isAtCapacity) return "text-red-600 bg-red-100"
-    if (isNearCapacity) return "text-yellow-600 bg-yellow-100"
-    return `${config.accentColor} bg-white/20`
+    if (isAtCapacity) return "bg-red-500/15 text-red-400"
+    if (isNearCapacity) return "bg-amber-500/15 text-amber-400"
+    return config.badgeBg
   }
 
   return (
     <div className={getColumnStyle()}>
       {/* Header */}
-      <div className={getHeaderStyle()}>
-        {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
-        <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-8 -translate-x-8"></div>
-        
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
-              <div className="text-2xl">{config.icon}</div>
-              <div>
-                <h2 className="font-bold text-lg text-white drop-shadow-sm">{column.title}</h2>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Badge className={`${getCapacityColor()} font-bold text-sm px-3 py-1 shadow-sm`}>
-                {column.tasks.length}
-                {column.maxTasks && `/${column.maxTasks}`}
-              </Badge>
-              {isAtCapacity && <AlertTriangle className="h-4 w-4 text-red-300" />}
-            </div>
+      <div className={`p-4 rounded-t-xl bg-gradient-to-br ${config.headerGradient}`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <div className="text-xl">{config.icon}</div>
+            <h2 className={`font-semibold text-sm text-white`}>{column.title}</h2>
           </div>
 
-          {/* Column constraints info */}
-          <div className="flex flex-wrap gap-2 text-xs text-white/80">
-            {column.acceptsFrom && (
-              <div className="flex items-center space-x-1 bg-white/20 px-2 py-1 rounded-full">
-                <Users className="h-3 w-3" />
-                <span>From: {column.acceptsFrom.join(", ")}</span>
-              </div>
-            )}
-            {column.maxTasks && (
-              <div className="flex items-center space-x-1 bg-white/20 px-2 py-1 rounded-full">
-                <Target className="h-3 w-3" />
-                <span>Max: {column.maxTasks}</span>
-              </div>
-            )}
+          <div className="flex items-center space-x-2">
+            <Badge className={`${getCapacityColor()} font-semibold text-xs px-2 py-0.5 border-0`}>
+              {column.tasks.length}
+              {column.maxTasks && `/${column.maxTasks}`}
+            </Badge>
+            {isAtCapacity && <AlertTriangle className="h-3.5 w-3.5 text-red-400" />}
           </div>
+        </div>
+
+        {/* Column constraints info */}
+        <div className="flex flex-wrap gap-1.5 text-xs text-slate-400">
+          {column.acceptsFrom && (
+            <div className="flex items-center space-x-1 bg-white/10 px-2 py-0.5 rounded-full">
+              <Users className="h-3 w-3" />
+              <span>From: {column.acceptsFrom.join(", ")}</span>
+            </div>
+          )}
+          {column.maxTasks && (
+            <div className="flex items-center space-x-1 bg-white/10 px-2 py-0.5 rounded-full">
+              <Target className="h-3 w-3" />
+              <span>Max: {column.maxTasks}</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content Area */}
       <div
         ref={setNodeRef}
-        className={`p-4 min-h-[500px] space-y-3 ${
-          isOver && isAllowed ? "bg-gradient-to-br from-blue-50/50 to-indigo-50/50" : ""
-        } ${isOver && isBlocked ? "bg-gradient-to-br from-red-50/50 to-pink-50/50" : ""}`}
+        className={`p-3 min-h-[500px] space-y-3 rounded-b-xl transition-colors duration-200 ${
+          isOver && isAllowed && !isBlocked ? config.dropAllowedBg : ""
+        } ${isOver && isBlocked ? "bg-red-500/5" : ""}`}
       >
         {/* Drag constraints warning */}
         {isOver && isBlocked && dragConstraints?.reason && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center space-x-2 text-red-700 text-sm">
-              <AlertTriangle className="h-4 w-4" />
+          <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div className="flex items-center space-x-2 text-red-400 text-xs">
+              <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="font-medium">{dragConstraints.reason}</span>
             </div>
           </div>
@@ -213,22 +192,22 @@ export function DroppableColumn({
         {/* Drop zone indicator */}
         {isOver && (
           <div
-            className={`p-6 border-2 border-dashed rounded-xl text-center transition-all duration-200 ${
+            className={`p-5 border border-dashed rounded-xl text-center transition-all duration-200 ${
               isAllowed && !isBlocked
-                ? "border-blue-300 bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700"
-                : "border-red-300 bg-gradient-to-br from-red-100 to-pink-100 text-red-700"
+                ? `${config.dropAllowedBorder} ${config.dropAllowedBg}`
+                : "border-red-500/40 bg-red-500/10 text-red-400"
             }`}
           >
             <div className="flex flex-col items-center space-y-2">
               {isAllowed && !isBlocked ? (
                 <>
-                  <Sparkles className="h-8 w-8 text-blue-500" />
-                  <span className="font-semibold">Drop task here</span>
+                  <Sparkles className={`h-6 w-6 ${config.accentColor}`} />
+                  <span className="text-sm font-medium">Drop task here</span>
                 </>
               ) : (
                 <>
-                  <AlertTriangle className="h-8 w-8 text-red-500" />
-                  <span className="font-semibold">{dragConstraints.reason || "Cannot drop here"}</span>
+                  <AlertTriangle className="h-6 w-6 text-red-400" />
+                  <span className="text-sm font-medium">{dragConstraints.reason || "Cannot drop here"}</span>
                 </>
               )}
             </div>
@@ -238,16 +217,16 @@ export function DroppableColumn({
         {/* Add Task Button */}
         <Button
           variant="ghost"
-          className={`w-full justify-center text-gray-600 hover:text-white hover:bg-gradient-to-r ${config.gradient} border-2 border-dashed ${config.borderColor} hover:border-transparent rounded-xl py-6 transition-all duration-300 group ${
-            isAtCapacity 
-              ? "opacity-50 cursor-not-allowed hover:bg-gray-100 hover:text-gray-600" 
-              : "hover:shadow-lg hover:scale-105"
+          className={`w-full justify-center text-slate-500 border border-dashed border-white/[0.08] rounded-xl py-5 transition-all duration-200 ${config.addTaskHover} ${
+            isAtCapacity
+              ? "opacity-40 cursor-not-allowed"
+              : "hover:shadow-none"
           }`}
           onClick={onCreateTask}
           disabled={!!isAtCapacity || !canCreate}
         >
-          <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
-          <span className="font-semibold">{isAtCapacity ? "Column Full" : (!canCreate ? "View-only" : "Add a task")}</span>
+          <Plus className="h-4 w-4 mr-2" />
+          <span className="text-sm font-medium">{isAtCapacity ? "Column Full" : (!canCreate ? "View-only" : "Add a task")}</span>
         </Button>
       </div>
     </div>
