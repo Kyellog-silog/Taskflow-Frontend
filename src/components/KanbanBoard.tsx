@@ -67,8 +67,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onTaskUpdate,
   onTaskCreate,
   onTaskDelete,
-  onTaskMoveFromModal,
-  userRole = "member",
   teamPermissions,
 }) => {
   const [activeTask, setActiveTask] = useState<Task | null>(null)
@@ -258,7 +256,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <DroppableColumn
                 column={column}
                 dragConstraints={activeTask ? getDragConstraints(activeTask) : { allowedColumns: [], blockedColumns: [] }}
-                userRole={userRole}
                 canCreate={teamPermissions ? teamPermissions.canCreateTasks : true}
                 onCreateTask={() => setCreateTaskColumn(column.id)}
               >

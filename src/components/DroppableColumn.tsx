@@ -23,7 +23,6 @@ interface DroppableColumnProps {
     blockedColumns: string[]
     reason?: string
   }
-  userRole?: "admin" | "member"
   canCreate?: boolean
   onCreateTask: () => void
 }
@@ -32,7 +31,6 @@ export function DroppableColumn({
   column,
   children,
   dragConstraints = { allowedColumns: [], blockedColumns: [] },
-  userRole = "member",
   canCreate = true,
   onCreateTask,
 }: DroppableColumnProps) {
@@ -135,7 +133,7 @@ export function DroppableColumn({
   }
 
   return (
-    <div className={getColumnStyle()}>
+    <div ref={setNodeRef} className={getColumnStyle()}>
       {/* Header */}
       <div className={`p-4 rounded-t-xl bg-gradient-to-br ${config.headerGradient}`}>
         <div className="flex items-center justify-between mb-2">
@@ -172,7 +170,6 @@ export function DroppableColumn({
 
       {/* Content Area */}
       <div
-        ref={setNodeRef}
         className={`p-3 min-h-[500px] space-y-3 rounded-b-xl transition-colors duration-200 ${
           isOver && isAllowed && !isBlocked ? config.dropAllowedBg : ""
         } ${isOver && isBlocked ? "bg-red-500/5" : ""}`}
