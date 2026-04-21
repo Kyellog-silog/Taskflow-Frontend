@@ -14,648 +14,402 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { boardsAPI, tasksAPI, profileAPI } from "../services/api"
 import { useToast } from "../hooks/use-toast"
 import { useAuth } from "../contexts/AuthContext"
-import { Users, CheckSquare, Clock, MoreVertical, Folder, RefreshCw, Target, Edit, Trash2, Copy, ExternalLink, TrendingUp, Activity, Eye, Archive } from 'lucide-react'
+import {
+  Users, CheckSquare, Clock, MoreVertical, Folder, RefreshCw, Target,
+  Edit, Trash2, Copy, ExternalLink, TrendingUp, Activity, Eye, Archive,
+} from "lucide-react"
 import logger from "../lib/logger"
 
+/* ── helpers ── */
+const activityBadgeClass = (kind: string) =>
+  kind === "completed" ? "bg-green-500/15 text-green-400 border-green-500/20"
+  : kind === "created"  ? "bg-violet-500/15 text-violet-400 border-violet-500/20"
+  : kind === "deleted"  ? "bg-red-500/15 text-red-400 border-red-500/20"
+  : "bg-blue-500/15 text-blue-400 border-blue-500/20"
+
+const activityDotClass = (kind: string) =>
+  kind === "completed" ? "bg-green-500"
+  : kind === "created"  ? "bg-violet-500"
+  : kind === "deleted"  ? "bg-red-500"
+  : "bg-blue-500"
+
+const statCards = [
+  { key: "boards",  label: "Total Boards",   sub: "Active projects",     icon: Folder,      color: "from-violet-500/20 to-purple-500/10", iconColor: "text-violet-400", border: "border-violet-500/20" },
+  { key: "tasks",   label: "Active Tasks",   sub: "Across all boards",   icon: CheckSquare, color: "from-blue-500/20 to-cyan-500/10",     iconColor: "text-blue-400",   border: "border-blue-500/20" },
+  { key: "recent",  label: "Recent Boards",  sub: "Recently visited",    icon: Clock,       color: "from-emerald-500/20 to-green-500/10", iconColor: "text-emerald-400", border: "border-emerald-500/20" },
+  { key: "due",     label: "Due Today",      sub: "Need attention",      icon: Target,      color: "from-orange-500/20 to-red-500/10",    iconColor: "text-orange-400", border: "border-orange-500/20" },
+]
 
 const DashboardPage = () => {
   const { user } = useAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  
-  // Modal states
   const [deleteBoard, setDeleteBoard] = useState<any>(null)
-  const [editBoard, setEditBoard] = useState<any>(null)
+  const [editBoard, setEditBoard]     = useState<any>(null)
 
-  // Fetch recent boards (top 5 most recently visited)
-  const {
-    data: recentBoardsData,
-    isLoading: recentBoardsLoading,
-    error: recentBoardsError,
-    refetch: refetchRecentBoards,
-  } = useQuery(
+  /* ── queries ── */
+  const { data: recentBoardsData, isLoading: recentBoardsLoading, error: recentBoardsError, refetch: refetchRecentBoards } = useQuery(
     ["boards", "recent"],
-    async () => {
-      const response = await boardsAPI.getBoards("recent", 5)
-      return response
-    },
-    {
-  // Idle-friendly: rely on SSE to invalidate; don't refetch on focus/mount
-  refetchOnWindowFocus: false,
-  refetchOnMount: false,
-  refetchInterval: false,
-  staleTime: 5 * 60 * 1000,
-      onError: (error: any) => {
-        logger.error("Failed to fetch recent boards:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load recent boards",
-          variant: "destructive",
-        })
-      },
-    },
+    () => boardsAPI.getBoards("recent", 5),
+    { refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
+      onError: (e: any) => { logger.error("Failed to fetch recent boards:", e); toast({ title: "Error", description: "Failed to load recent boards", variant: "destructive" }) } },
   )
-
-  const estimateCompletionPercentage = (board: any) => {
-    const totalTasks = board.tasks_count || 0;
-    if (totalTasks === 0) return 0;
-    
-    if (board.columns && board.columns.length > 0) {
-      const doneColumn = board.columns.find((col: any) => 
-        col.name.toLowerCase() === 'done' || 
-        col.name.toLowerCase().includes('complete')
-      );
-      
-      if (doneColumn && doneColumn.tasks) {
-        const completedTasks = doneColumn.tasks.length;
-        return Math.round((completedTasks / totalTasks) * 100);
-      }
-    }
-    return Math.min(100, Math.round(totalTasks > 0 ? 25 : 0));
-  }
-
-  // Fetch all active boards for stats
-  const {
-    data: allBoardsData,
-  } = useQuery(
+  const { data: allBoardsData } = useQuery(
     ["boards", "active"],
-    async () => {
-      const response = await boardsAPI.getBoards("active")
-      return response
-    },
-    {
-  // Idle-friendly: rely on SSE to invalidate; don't refetch on focus/mount
-  refetchOnWindowFocus: false,
-  refetchOnMount: false,
-  refetchInterval: false,
-  staleTime: 5 * 60 * 1000,
-    },
+    () => boardsAPI.getBoards("active"),
+    { refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000 },
   )
-
-  // Dashboard due counters
   const { data: dueTodayData, isLoading: dueTodayLoading } = useQuery(
     ["tasks", "due-today", { uncompleted: true }],
-    async () => {
-      const res = await tasksAPI.getDueTodayCount()
-      return res
-    },
-  { staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false }
+    () => tasksAPI.getDueTodayCount(),
+    { staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false },
   )
   const { data: dueSoonData, isLoading: dueSoonLoading } = useQuery(
     ["tasks", "due-soon", { days: 3, uncompleted: true }],
-    async () => {
-      const res = await tasksAPI.getDueSoonCount(3)
-      return res
-    },
-  { staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false }
+    () => tasksAPI.getDueSoonCount(3),
+    { staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false },
   )
-
-  // Recent activity for this user
   const { data: activityResp } = useQuery(
     ["profile", "activity", { limit: 5 }],
-  () => profileAPI.getActivity(5),
-  { staleTime: 30_000, refetchOnMount: true, refetchOnWindowFocus: false }
+    () => profileAPI.getActivity(5),
+    { staleTime: 30_000, refetchOnMount: true, refetchOnWindowFocus: false },
   )
+
+  /* ── derived ── */
+  const recentBoards = recentBoardsData?.data || []
+  const allBoards    = allBoardsData?.data   || []
+  const totalTasks   = allBoards.reduce((acc: number, b: any) => acc + (b.tasks_count || 0), 0)
+  const totalBoards  = allBoards.length
+
   const activities = (activityResp?.data || [])
-    .filter((a: any) => ['created','completed','moved','joined','deleted'].includes(a.action))
+    .filter((a: any) => ["created", "completed", "moved", "joined", "deleted"].includes(a.action))
     .map((a: any) => {
-      const isMovedToDone = a.action === 'moved' && /to\s*Done/i.test(a.description || '')
-      const kind = isMovedToDone ? 'completed' : a.action
-      // Prefer task title; else board/team description
+      const isMovedToDone = a.action === "moved" && /to\s*Done/i.test(a.description || "")
+      const kind  = isMovedToDone ? "completed" : a.action
       const title = a.task?.title || a.board?.name || a.team?.name || a.description
-      // Target board for navigation: from task->board_id; else board.id
-      const navBoardId = a.task?.board_id || a.board?.id || null
-      return {
-        id: a.id,
-        kind,
-        title,
-        boardId: navBoardId,
-        time: new Date(a.created_at).toLocaleString(),
-      }
+      return { id: a.id, kind, title, boardId: a.task?.board_id || a.board?.id || null, time: new Date(a.created_at).toLocaleString() }
     })
     .slice(0, 5)
 
-  // Delete board mutation
+  const statValues: Record<string, any> = {
+    boards: totalBoards,
+    tasks:  totalTasks,
+    recent: recentBoards.length,
+    due:    dueTodayLoading ? "…" : (dueTodayData?.data?.count ?? 0),
+  }
+
+  const estimateCompletion = (board: any) => {
+    const total = board.tasks_count || 0
+    if (!total) return 0
+    const doneCol = board.columns?.find((c: any) => /done|complete/i.test(c.name))
+    if (doneCol?.tasks) return Math.round((doneCol.tasks.length / total) * 100)
+    return Math.min(100, Math.round(total > 0 ? 25 : 0))
+  }
+
+  /* ── mutations ── */
   const deleteBoardMutation = useMutation(
-    async (boardId: string) => {
-      return await boardsAPI.deleteBoard(boardId)
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries("boards")
-        toast({
-          title: "Success! 🗑️",
-          description: "Board deleted successfully",
-        })
-        setDeleteBoard(null)
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to delete board",
-          variant: "destructive",
-        })
-      },
-    },
+    (id: string) => boardsAPI.deleteBoard(id),
+    { onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board deleted" }); setDeleteBoard(null) },
+      onError: (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to delete board", variant: "destructive" }) },
   )
-
-  // Archive board mutation
   const archiveBoardMutation = useMutation(
-    async (boardId: string) => {
-      return await boardsAPI.archiveBoard(boardId)
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries("boards")
-        toast({
-          title: "Success! 📦",
-          description: "Board archived successfully",
-        })
-      },
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to archive board",
-          variant: "destructive",
-        })
-      },
-    },
+    (id: string) => boardsAPI.archiveBoard(id),
+    { onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board archived" }) },
+      onError: (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to archive board", variant: "destructive" }) },
   )
 
-  // Handle board creation success
-  const handleBoardCreated = (newBoard: any) => {
-  logger.log("New board created:", newBoard)
+  const handleBoardCreated = (nb: any) => {
+    logger.log("Board created:", nb)
     refetchRecentBoards()
     queryClient.invalidateQueries(["boards", "active"])
-  // Surface the create event in Recent Activity
-  queryClient.invalidateQueries(["profile", "activity"]) 
-    toast({
-      title: "Success! 🎉",
-      description: "Board created successfully",
-    })
+    queryClient.invalidateQueries(["profile", "activity"])
+    toast({ title: "Board created!" })
   }
-
-  // Handle board update success
-  const handleBoardUpdated = (updatedBoard: any) => {
-  logger.log("Board updated:", updatedBoard)
+  const handleBoardUpdated = (ub: any) => {
+    logger.log("Board updated:", ub)
     refetchRecentBoards()
     queryClient.invalidateQueries(["boards", "active"])
-  // Ensure activity reflects changes if any
-  queryClient.invalidateQueries(["profile", "activity"]) 
+    queryClient.invalidateQueries(["profile", "activity"])
     setEditBoard(null)
-    toast({
-      title: "Success! ✨",
-      description: "Board updated successfully",
-    })
+    toast({ title: "Board updated!" })
   }
-
-  // Navigate to board
-  const handleBoardClick = (boardId: string) => {
-    navigate(`/boards/${boardId}`)
-  }
-
-  // Navigate to boards page
-  const handleViewAllBoards = () => {
-    navigate('/boards')
-  }
-
-  // Handle board actions
-  const handleEditBoard = (board: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditBoard(board)
-  }
-
-  const handleDeleteBoard = (board: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setDeleteBoard(board)
-  }
-
-  const handleArchiveBoard = (board: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    archiveBoardMutation.mutate(board.id)
-  }
-  
-
-  const handleDuplicateBoard = (board: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    toast({
-      title: "Coming Soon!",
-      description: "Board duplication feature is coming soon",
-    })
-  }
-
-  // Get boards array from response
-  const recentBoards = recentBoardsData?.data || []
-  const allBoards = allBoardsData?.data || []
-
-  // Calculate stats
-  const totalTasks = allBoards.reduce((acc: number, board: any) => acc + (board.tasks_count || 0), 0)
-  const totalBoards = allBoards.length
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400 to-pink-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-10 animate-spin"
-          style={{ animationDuration: "20s" }}
-        ></div>
-      </div>
+    <div className="min-h-screen bg-[#050816] text-white">
+      <Header />
 
-      <div className="relative z-10">
-        <Header />
+      <main className="container mx-auto px-4 py-8">
 
-        <main className="container mx-auto px-4 py-8">
-          {/* Enhanced Header Section */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                Welcome back, {user?.name}! 👋
-              </h1>
-              <p className="text-gray-600 text-lg">Here's what's happening with your projects today.</p>
+        {/* Page heading */}
+        <div className="flex items-start justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-1">
+              Welcome back, {user?.name?.split(" ")[0]}
+            </h1>
+            <p className="text-slate-400">Here&apos;s what&apos;s happening with your projects today.</p>
+          </div>
+          <CreateBoardModal onBoardCreated={handleBoardCreated} />
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {statCards.map(({ key, label, sub, icon: Icon, color, iconColor, border }) => (
+            <Card key={key} className={`bg-gradient-to-br ${color} border ${border} shadow-lg`}>
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-slate-400 text-xs font-medium mb-1">{label}</p>
+                    <p
+                      className="text-3xl font-bold text-white tabular-nums"
+                      aria-live={key === "due" ? "polite" : undefined}
+                    >
+                      {statValues[key]}
+                    </p>
+                    <p className="text-slate-500 text-xs mt-1 flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" aria-hidden="true" />
+                      {sub}
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-white/5 rounded-xl">
+                    <Icon className={`h-6 w-6 ${iconColor}`} aria-hidden="true" />
+                  </div>
+                </div>
+                {key === "due" && (
+                  <p className="mt-3 text-xs text-slate-500">
+                    Due in 3 days: {dueSoonLoading ? "…" : (dueSoonData?.data?.count ?? 0)}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Recent boards */}
+        <section className="mb-8" aria-labelledby="recent-boards-heading">
+          <div className="flex items-center justify-between mb-5">
+            <h2 id="recent-boards-heading" className="text-xl font-semibold text-white">
+              Recently Visited Boards
+            </h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/boards")}
+                className="border-white/10 text-slate-300 hover:bg-white/5 hover:text-white transition-colors text-xs"
+              >
+                <Eye className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
+                View All
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchRecentBoards()}
+                disabled={recentBoardsLoading}
+                className="border-white/10 text-slate-300 hover:bg-white/5 hover:text-white transition-colors text-xs"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${recentBoardsLoading ? "animate-spin" : ""}`} aria-hidden="true" />
+                {recentBoardsLoading ? "Refreshing…" : "Refresh"}
+              </Button>
             </div>
-            <CreateBoardModal onBoardCreated={handleBoardCreated} />
           </div>
 
-          {/* Beautiful Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm font-medium">Total Boards</p>
-                    <p className="text-3xl font-bold">{totalBoards}</p>
-                    <p className="text-blue-200 text-xs mt-1">
-                      <TrendingUp className="h-3 w-3 inline mr-1" />
-                      Active projects
-                    </p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl">
-                    <Folder className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100 text-sm font-medium">Active Tasks</p>
-                    <p className="text-3xl font-bold">{totalTasks}</p>
-                    <p className="text-green-200 text-xs mt-1">
-                      <Activity className="h-3 w-3 inline mr-1" />
-                      Across all boards
-                    </p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl">
-                    <CheckSquare className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100 text-sm font-medium">Recent Boards</p>
-                    <p className="text-3xl font-bold">{recentBoards.length}</p>
-                    <p className="text-purple-200 text-xs mt-1">
-                      <Eye className="h-3 w-3 inline mr-1" />
-                      Recently visited
-                    </p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl">
-                    <Clock className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-orange-100 text-sm font-medium">Due Today</p>
-                    <p className="text-3xl font-bold">
-                      {dueTodayLoading ? '…' : (dueTodayData?.data?.count ?? 0)}
-                    </p>
-                    <p className="text-orange-200 text-xs mt-1">
-                      <Clock className="h-3 w-3 inline mr-1" />
-                      Need attention
-                    </p>
-                  </div>
-                  <div className="p-3 bg-white/20 rounded-xl">
-                    <Clock className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-                {/* Due soon helper */}
-                <div className="mt-4 text-xs text-orange-100/90 flex items-center gap-2">
-                  <span className="px-2 py-1 rounded-full bg-white/10 border border-white/20">
-                    Due in next 3 days: {dueSoonLoading ? '…' : (dueSoonData?.data?.count ?? 0)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Boards Section */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                Recently Visited Boards ⚡
-              </h2>
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="outline"
-                  onClick={handleViewAllBoards}
-                  className="bg-white/80 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-200"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
+          {recentBoardsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="glass rounded-2xl h-40 animate-pulse" />
+              ))}
+            </div>
+          ) : recentBoardsError ? (
+            <div className="glass rounded-2xl p-8 text-center">
+              <Folder className="h-10 w-10 text-slate-600 mx-auto mb-3" aria-hidden="true" />
+              <p className="text-slate-300 font-medium mb-1">Failed to load recent boards</p>
+              <p className="text-slate-500 text-sm mb-4">There was an error. Please try again.</p>
+              <Button size="sm" onClick={() => refetchRecentBoards()} className="bg-violet-600 hover:bg-violet-500 text-white">
+                Try Again
+              </Button>
+            </div>
+          ) : recentBoards.length === 0 ? (
+            <div className="glass rounded-2xl p-12 text-center">
+              <Clock className="h-12 w-12 text-slate-600 mx-auto mb-4" aria-hidden="true" />
+              <h3 className="text-white font-semibold text-lg mb-2">No recent boards yet</h3>
+              <p className="text-slate-400 text-sm mb-6">Create your first board or visit an existing one to see it here.</p>
+              <div className="flex justify-center gap-3">
+                <CreateBoardModal onBoardCreated={handleBoardCreated} />
+                <Button variant="outline" size="sm" onClick={() => navigate("/boards")} className="border-white/10 text-slate-300 hover:bg-white/5">
+                  <Eye className="h-4 w-4 mr-1.5" aria-hidden="true" />
                   View All Boards
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => refetchRecentBoards()}
-                  disabled={recentBoardsLoading}
-                  className="bg-white/80 backdrop-blur-sm border-gray-300 text-gray-700 hover:bg-white hover:shadow-lg transition-all duration-200"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${recentBoardsLoading ? "animate-spin" : ""}`} />
-                  {recentBoardsLoading ? "Refreshing..." : "Refresh"}
-                </Button>
               </div>
             </div>
-
-            {recentBoardsLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <Card key={i} className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-lg animate-pulse">
-                    <CardHeader className="pb-3">
-                      <div className="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4 mb-2"></div>
-                      <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full"></div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-1/2"></div>
-                        <div className="flex space-x-2">
-                          {[1, 2, 3].map((j) => (
-                            <div key={j} className="h-8 w-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full"></div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : recentBoardsError ? (
-              <Card className="bg-white/80 backdrop-blur-sm border-2 border-red-200 shadow-lg p-8 text-center">
-                <div className="text-red-500 mb-4">
-                  <Folder className="h-12 w-12 mx-auto" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load recent boards</h3>
-                <p className="text-gray-600 mb-4">There was an error loading your recent boards. Please try again.</p>
-                <Button 
-                  onClick={() => refetchRecentBoards()} 
-                  className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentBoards.map((board: any) => (
+                <Card
+                  key={board.id}
+                  onClick={() => navigate(`/boards/${board.id}`)}
+                  className="group glass rounded-2xl border-white/[0.06] hover:border-violet-500/30 transition-all duration-200 cursor-pointer hover:shadow-lg hover:shadow-violet-900/20 bg-transparent"
                 >
-                  Try Again
-                </Button>
-              </Card>
-            ) : recentBoards.length === 0 ? (
-              <Card className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-lg p-12 text-center">
-                <div className="text-gray-400 mb-6">
-                  <Clock className="h-16 w-16 mx-auto" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">No recent boards yet! 🚀</h3>
-                <p className="text-gray-600 mb-6 text-lg">Start by creating your first board or visit an existing one to see it here.</p>
-                <div className="flex justify-center space-x-4">
-                  <CreateBoardModal onBoardCreated={handleBoardCreated} />
-                  <Button 
-                    variant="outline"
-                    onClick={handleViewAllBoards}
-                    className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View All Boards
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recentBoards.map((board: any) => (
-                  <Card
-                    key={board.id}
-                    className="group bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-lg hover:shadow-2xl hover:border-blue-300 transition-all duration-300 cursor-pointer hover:scale-105 relative overflow-hidden"
-                    onClick={() => handleBoardClick(board.id)}
-                  >
-                    {/* Background gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    
-                    <CardHeader className="pb-3 relative z-10">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors duration-200 flex items-center">
-                            <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mr-3 group-hover:scale-110 transition-transform duration-200"></div>
-                            {board.name}
-                          </CardTitle>
-                          <CardDescription className="text-gray-600 text-sm leading-relaxed">
-                            {board.description || "No description provided"}
-                          </CardDescription>
-                        </div>
-                        
-                        {/* Enhanced 3-Dot Menu */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-blue-100 hover:scale-110 rounded-full" 
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreVertical className="h-4 w-4 text-gray-600" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-sm border-2 border-gray-200 shadow-2xl rounded-xl">
-                            <DropdownMenuItem 
-                              className="text-blue-600 hover:bg-blue-50 cursor-pointer rounded-lg mx-1 my-1 font-medium"
-                              onClick={(e) => handleEditBoard(board, e)}
-                            >
-                              <Edit className="h-4 w-4 mr-3" />
-                              Edit Board
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-orange-600 hover:bg-orange-50 cursor-pointer rounded-lg mx-1 my-1 font-medium"
-                              onClick={(e) => handleArchiveBoard(board, e)}
-                            >
-                              <Archive className="h-4 w-4 mr-3" />
-                              Archive Board
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-green-600 hover:bg-green-50 cursor-pointer rounded-lg mx-1 my-1 font-medium"
-                              onClick={(e) => handleDuplicateBoard(board, e)}
-                            >
-                              <Copy className="h-4 w-4 mr-3" />
-                              Duplicate Board
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-purple-600 hover:bg-purple-50 cursor-pointer rounded-lg mx-1 my-1 font-medium"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                window.open(`/boards/${board.id}`, '_blank')
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4 mr-3" />
-                              Open in New Tab
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-gray-200 my-2" />
-                            <DropdownMenuItem 
-                              className="text-red-600 hover:bg-red-50 cursor-pointer rounded-lg mx-1 my-1 font-medium"
-                              onClick={(e) => handleDeleteBoard(board, e)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-3" />
-                              Delete Board
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  <CardHeader className="pb-2 pt-5 px-5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base font-semibold text-white group-hover:text-violet-300 transition-colors truncate flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0" aria-hidden="true" />
+                          {board.name}
+                        </CardTitle>
+                        <CardDescription className="text-slate-500 text-xs mt-1 line-clamp-1">
+                          {board.description || "No description"}
+                        </CardDescription>
                       </div>
-                    </CardHeader>
-                    
-                    <CardContent className="pt-0 relative z-10">
-                      <div className="space-y-4">
-                        {/* Enhanced Board Stats */}
-                        <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-1 text-blue-600">
-                              <Target className="h-4 w-4" />
-                              <span className="font-semibold text-sm">{board.columns?.length || 0}</span>
-                              <span className="text-xs text-gray-600">columns</span>
-                            </div>
-                            <div className="w-1 h-4 bg-gray-300 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-300"
-                                style={{ width: `${Math.min(100, (board.tasks_count || 0) * 10)}%` }}
-                              ></div>
-                            </div>
-                            <div className="flex items-center space-x-1 text-green-600">
-                              <CheckSquare className="h-4 w-4" />
-                              <span className="font-semibold text-sm">{board.tasks_count || 0}</span>
-                              <span className="text-xs text-gray-600">tasks</span>
-                            </div>
-                          </div>
-                          
-                          {/* Progress indicator */}
-                          <div className="flex items-center space-x-2">
-                            <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-300"
-                                style={{ width: `${estimateCompletionPercentage(board)}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-xs text-gray-500 font-medium">
-                              {estimateCompletionPercentage(board)}%
-                            </span>
-                          </div>
-                        </div>
 
-                        {/* Team Info */}
-                        {board.team && board.team.name && (
-                          <div className="flex items-center space-x-2">
-                            <Badge className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200 font-medium">
-                              <Users className="h-3 w-3 mr-1" />
-                              {board.team.name}
-                            </Badge>
-                          </div>
-                        )}
+                      {/* Board actions */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            aria-label={`Actions for ${board.name}`}
+                            className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/10 rounded-lg"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-[#0d1224] border border-white/10 shadow-2xl">
+                          {[
+                            { label: "Edit Board",        icon: Edit,         cls: "text-slate-300", action: (e: any) => { e.stopPropagation(); setEditBoard(board) } },
+                            { label: "Archive Board",     icon: Archive,      cls: "text-orange-400", action: (e: any) => { e.stopPropagation(); archiveBoardMutation.mutate(board.id) } },
+                            { label: "Duplicate Board",   icon: Copy,         cls: "text-slate-300", action: (e: any) => { e.stopPropagation(); toast({ title: "Coming soon!" }) } },
+                            { label: "Open in New Tab",   icon: ExternalLink, cls: "text-slate-300", action: (e: any) => { e.stopPropagation(); window.open(`/boards/${board.id}`, "_blank") } },
+                          ].map(({ label, icon: Icon, cls, action }) => (
+                            <DropdownMenuItem key={label} onClick={action} className={`flex items-center gap-2 ${cls} hover:bg-white/5 cursor-pointer text-sm`}>
+                              <Icon className="h-4 w-4" aria-hidden="true" />
+                              {label}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator className="bg-white/[0.06]" />
+                          <DropdownMenuItem
+                            onClick={(e) => { e.stopPropagation(); setDeleteBoard(board) }}
+                            className="flex items-center gap-2 text-red-400 hover:bg-red-500/10 cursor-pointer text-sm"
+                          >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                            Delete Board
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
 
-                        {/* Enhanced Creator Info with Last Visited */}
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8 ring-2 ring-white shadow-md">
-                              <AvatarImage src={board.created_by?.avatar || "/placeholder.svg"} />
-                              <AvatarFallback className="text-xs bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
-                                {board.created_by?.name?.charAt(0) || "U"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {board.created_by?.name || "Unknown"}
-                              </p>
-                              <p className="text-xs text-gray-500">Creator</p>
-                            </div>
-                          </div>
-                          
-                          {/* Last Visited Date */}
-                          <div className="text-right">
-                            <div className="flex items-center space-x-1 text-xs text-gray-500">
-                              <Clock className="h-3 w-3" />
-                              <span>Last visited</span>
-                            </div>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {board.last_visited_at 
-                                ? new Date(board.last_visited_at).toLocaleDateString() === new Date().toLocaleDateString()
-                                  ? "Today"
-                                  : `${Math.ceil((Date.now() - new Date(board.last_visited_at).getTime()) / (1000 * 60 * 60 * 24))} days ago`
-                                : "Never"
-                              }
-                            </p>
-                          </div>
-                        </div>
+                  <CardContent className="px-5 pb-5 pt-0 space-y-3">
+                    {/* Stats row */}
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <Target className="h-3.5 w-3.5 text-violet-400" aria-hidden="true" />
+                          <span className="tabular-nums font-medium text-white">{board.columns?.length || 0}</span> cols
+                        </span>
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <CheckSquare className="h-3.5 w-3.5 text-green-400" aria-hidden="true" />
+                          <span className="tabular-nums font-medium text-white">{board.tasks_count || 0}</span> tasks
+                        </span>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      {/* Progress */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-14 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full transition-all duration-300"
+                            style={{ width: `${estimateCompletion(board)}%` }}
+                            role="progressbar"
+                            aria-valuenow={estimateCompletion(board)}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-label="Board completion"
+                          />
+                        </div>
+                        <span className="text-[10px] text-slate-500 tabular-nums">{estimateCompletion(board)}%</span>
+                      </div>
+                    </div>
+
+                    {/* Team badge */}
+                    {board.team?.name && (
+                      <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-xs font-medium">
+                        <Users className="h-3 w-3 mr-1" aria-hidden="true" />
+                        {board.team.name}
+                      </Badge>
+                    )}
+
+                    {/* Creator + last visited */}
+                    <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={board.created_by?.avatar || "/placeholder.svg"} />
+                          <AvatarFallback className="bg-violet-600 text-white text-[10px] font-bold">
+                            {board.created_by?.name?.charAt(0) || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-slate-400">{board.created_by?.name || "Unknown"}</span>
+                      </div>
+                      <span className="text-[10px] text-slate-600 flex items-center gap-1">
+                        <Clock className="h-3 w-3" aria-hidden="true" />
+                        {board.last_visited_at
+                          ? new Date(board.last_visited_at).toLocaleDateString() === new Date().toLocaleDateString()
+                            ? "Today"
+                            : `${Math.ceil((Date.now() - new Date(board.last_visited_at).getTime()) / 86400000)}d ago`
+                          : "Never"}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Recent activity */}
+        <section aria-labelledby="activity-heading">
+          <Card className="glass border-white/[0.06] bg-transparent">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-violet-600/20 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-violet-400" aria-hidden="true" />
+                </div>
+                <div>
+                  <CardTitle id="activity-heading" className="text-white text-base">Recent Activity</CardTitle>
+                  <CardDescription className="text-slate-500 text-xs">Latest updates from your boards</CardDescription>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Enhanced Recent Activity */}
-          <Card className="bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-gray-900 flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
-                  <Activity className="h-5 w-5 text-white" />
-                </div>
-                <span>Recent Activity</span>
-              </CardTitle>
-              <CardDescription className="text-gray-600">Latest updates from your boards</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {activities.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-3">
-                      <Activity className="h-12 w-12 mx-auto" />
-                    </div>
-                    <p className="text-sm text-gray-500">No recent activity to show</p>
-                    <p className="text-xs text-gray-400 mt-1">Create your first board or task to get started!</p>
-                  </div>
-                ) : (
-                  activities.map((a: any) => (
-                    <div
+              {activities.length === 0 ? (
+                <div className="text-center py-10">
+                  <Activity className="h-10 w-10 text-slate-700 mx-auto mb-3" aria-hidden="true" />
+                  <p className="text-slate-400 text-sm">No recent activity yet</p>
+                  <p className="text-slate-600 text-xs mt-1">Create your first board or task to get started.</p>
+                </div>
+              ) : (
+                <ul className="space-y-2" aria-label="Activity feed">
+                  {activities.map((a: any) => (
+                    <li
                       key={a.id}
-                      className="flex items-start space-x-4 p-3 rounded-lg border cursor-pointer hover:bg-gray-50"
                       onClick={() => a.boardId && navigate(`/boards/${a.boardId}`)}
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/[0.05]"
                     >
-                      <div className={`h-3 w-3 rounded-full mt-2 flex-shrink-0 ${a.kind === 'completed' ? 'bg-green-500' : a.kind === 'created' ? 'bg-blue-500' : a.kind === 'deleted' ? 'bg-red-500' : 'bg-purple-500'}`}></div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{a.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{a.time}</p>
+                      <span className={`h-2 w-2 rounded-full flex-shrink-0 ${activityDotClass(a.kind)}`} aria-hidden="true" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-slate-300 truncate">{a.title}</p>
+                        <p className="text-xs text-slate-600 mt-0.5">{a.time}</p>
                       </div>
-                      <Badge className={`${a.kind === 'completed' ? 'bg-green-100 text-green-700' : a.kind === 'created' ? 'bg-blue-100 text-blue-700' : a.kind === 'deleted' ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'} text-xs`}>
-                        {a.kind === 'completed' ? 'Completed' : a.kind === 'created' ? 'New' : a.kind === 'deleted' ? 'Deleted' : 'Updated'}
-                      </Badge>
-                    </div>
-                  ))
-                )}
-              </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${activityBadgeClass(a.kind)}`}>
+                        {a.kind === "completed" ? "Completed" : a.kind === "created" ? "New" : a.kind === "deleted" ? "Deleted" : "Updated"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
-        </main>
-      </div>
+        </section>
+      </main>
 
       {/* Modals */}
       {deleteBoard && (
@@ -667,7 +421,6 @@ const DashboardPage = () => {
           isLoading={deleteBoardMutation.isLoading}
         />
       )}
-
       {editBoard && (
         <EditBoardModal
           board={editBoard}

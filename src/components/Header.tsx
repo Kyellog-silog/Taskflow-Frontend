@@ -1,12 +1,11 @@
 "use client"
 
-import  React from "react"
+import React from "react"
 import { useState } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { Bell, Search, Plus, Menu, X } from "lucide-react"
+import { Bell, Search, Plus, Menu, X, LayoutDashboard, Kanban, Users, User, Settings, LogOut } from "lucide-react"
 import { CreateTaskModal } from "./CreateTaskModal"
 import { useTasks } from "../hooks/useTasks"
 import { useToast } from "../hooks/use-toast"
@@ -25,6 +24,13 @@ import { Textarea } from "./ui/textarea"
 import { boardsAPI, teamsAPI, notificationsAPI } from "../services/api"
 import { storageService } from "../services/storage"
 import { useQuery, useMutation, useQueryClient } from "react-query"
+import { Logo } from "./Logo"
+
+const appNav = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Boards",    href: "/boards",    icon: Kanban },
+  { label: "Teams",     href: "/teams",     icon: Users },
+]
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth()
@@ -37,43 +43,26 @@ export const Header: React.FC = () => {
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false)
   const [isCreateBoardModalOpen, setIsCreateBoardModalOpen] = useState(false)
   const [newBoard, setNewBoard] = useState({ name: "", description: "" })
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("")
 
-  // Extract boardId from URL if on a board page
   const boardId = location.pathname.startsWith("/boards/") ? location.pathname.split("/")[2] : undefined
-
   const { createTask } = useTasks(boardId)
 
-  // Create board mutation
   const createBoardMutation = useMutation(boardsAPI.createBoard, {
     onSuccess: (data) => {
       queryClient.invalidateQueries("boards")
       setIsCreateBoardModalOpen(false)
       setNewBoard({ name: "", description: "" })
-      toast({
-        title: "Success",
-        description: "Board created successfully with default columns",
-      })
-      // Navigate to the new board
-      if (data?.id) {
-        navigate(`/boards/${data.id}`)
-      }
+      toast({ title: "Board created", description: "Your new board is ready." })
+      if (data?.id) navigate(`/boards/${data.id}`)
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to create board",
-        variant: "destructive",
-      })
+      toast({ title: "Error", description: error.response?.data?.message || "Failed to create board", variant: "destructive" })
     },
   })
 
-  const { data: teamsData } = useQuery({
-    queryKey: ["teams"],
-    queryFn: teamsAPI.getTeams,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  })
+  const { data: teamsData } = useQuery({ queryKey: ["teams"], queryFn: teamsAPI.getTeams, staleTime: 5 * 60 * 1000 })
 
-  // Notifications state via react-query
   const prevUnreadRef = React.useRef<number>(0)
   const { data: unreadCountData } = useQuery({
     queryKey: ["notifications", "unread-count"],
@@ -83,20 +72,14 @@ export const Header: React.FC = () => {
     onSuccess: (data) => {
       try {
         const current = data?.data?.count ?? 0
-        const prev = prevUnreadRef.current
-        // If unread increased, optionally play sound
-        if (current > prev) {
-          const soundOn = storageService.getItem<boolean>('notif_sound_enabled') ?? true
-          const volume = (storageService.getItem<number>('notif_sound_volume') ?? 70) / 100
-          if (soundOn) {
-            const audio = new Audio('/sounds/notify.mp3')
-            audio.volume = volume
-            audio.play().catch(()=>{})
-          }
+        if (current > prevUnreadRef.current) {
+          const soundOn = storageService.getItem<boolean>("notif_sound_enabled") ?? true
+          const volume = (storageService.getItem<number>("notif_sound_volume") ?? 70) / 100
+          if (soundOn) { const a = new Audio("/sounds/notify.mp3"); a.volume = volume; a.play().catch(() => {}) }
         }
         prevUnreadRef.current = current
       } catch {}
-    }
+    },
   })
   const unreadCount = unreadCountData?.data?.count ?? 0
 
@@ -113,15 +96,10 @@ export const Header: React.FC = () => {
     },
   })
 
-  // Add team selection state - now optional
-  const [selectedTeamId, setSelectedTeamId] = useState<string>("")
-
   const handleCreateBoard = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newBoard.name.trim()) return
-
-    // Add default columns to the board data
-    const boardData = {
+    createBoardMutation.mutate({
       ...newBoard,
       ...(selectedTeamId && { team_id: selectedTeamId }),
       columns: [
@@ -130,204 +108,134 @@ export const Header: React.FC = () => {
         { title: "Review", id: "review", color: "purple-500" },
         { title: "Done", id: "done", color: "green-500" },
       ],
-    }
-
-    createBoardMutation.mutate(boardData)
+    })
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate("/login")
-  }
+  const handleLogout = async () => { await logout(); navigate("/login") }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-  }
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   const renderNotificationText = (n: any) => {
-    const type = n.type
-    switch (type) {
-      case "task.assigned":
-        return <div>You've been assigned to a task.</div>
-      case "task.completed":
-        return <div>A task was marked as completed.</div>
-      case "comment.created":
-        return <div>New comment on a task you're involved in.</div>
-      default:
-        return <div>Update in your workspace.</div>
+    switch (n.type) {
+      case "task.assigned":  return "You've been assigned to a task."
+      case "task.completed": return "A task was marked as completed."
+      case "comment.created": return "New comment on a task you're involved in."
+      default: return "Update in your workspace."
     }
   }
+
+  const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + "/")
 
   return (
     <>
-  <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="sticky top-0 z-40 bg-[#080d1f]/90 backdrop-blur-md border-b border-white/[0.06]">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and Brand */}
-            <div className="flex items-center space-x-4">
-              <Link to="/dashboard" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-sm">TF</span>
-                </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent hidden sm:block">
-                  TaskFlow
-                </span>
-              </Link>
-            </div>
+          <div className="flex items-center justify-between h-14 gap-4">
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link
-                to="/dashboard"
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-blue-50"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/boards"
-                className="text-gray-600 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-purple-50"
-              >
-                Boards
-              </Link>
-              <Link
-                to="/teams"
-                className="text-gray-600 hover:text-green-600 px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-green-50"
-              >
-                Teams
-              </Link>
+            {/* Logo */}
+            <Link to="/dashboard" className="flex-shrink-0" aria-label="TaskFlow dashboard">
+              <Logo size={28} showText />
+            </Link>
+
+            {/* Desktop nav */}
+            <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
+              {appNav.map(({ label, href, icon: Icon }) => (
+                <Link
+                  key={href}
+                  to={href}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                    isActive(href)
+                      ? "bg-violet-600/15 text-violet-400"
+                      : "text-slate-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {label}
+                </Link>
+              ))}
             </nav>
 
-            {/* Search Bar */}
-            <div className="hidden lg:flex items-center flex-1 max-w-md mx-8">
+            {/* Search */}
+            <div className="hidden lg:flex flex-1 max-w-sm">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                 <input
-                  type="text"
-                  placeholder="Search tasks, boards, or teams..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors"
+                  type="search"
+                  placeholder="Search tasks, boards…"
+                  aria-label="Search"
+                  className="w-full pl-9 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-slate-300 placeholder:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500 transition-colors"
                 />
               </div>
             </div>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
-              {/* Create Button with Dropdown */}
+            {/* Right actions */}
+            <div className="flex items-center gap-2">
+
+              {/* Create dropdown */}
               <DropdownMenu open={isCreateMenuOpen} onOpenChange={setIsCreateMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="sm"
-                    className="hidden sm:flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    className="hidden sm:flex items-center gap-1.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium shadow-lg shadow-violet-900/30 transition-colors"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4" aria-hidden="true" />
                     Create
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-48 bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-blue-200 shadow-xl"
-                >
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setIsCreateTaskModalOpen(true)
-                      setIsCreateMenuOpen(false)
-                    }}
-                    className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span>New Task</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setIsCreateBoardModalOpen(true)
-                      setIsCreateMenuOpen(false)
-                    }}
-                    className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <span>New Board</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      navigate("/teams")
-                      // We'll use the existing create team functionality in TeamsPage
-                      setTimeout(() => {
-                        const createTeamButton = document.querySelector("[data-create-team-button]")
-                        if (createTeamButton) {
-                          ;(createTeamButton as HTMLButtonElement).click()
-                        }
-                      }, 100)
-                      setIsCreateMenuOpen(false)
-                    }}
-                    className="hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>New Team</span>
-                    </div>
-                  </DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-44 bg-[#0d1224] border border-white/10 shadow-2xl">
+                  {[
+                    { label: "New Task",  dot: "bg-violet-500", action: () => { setIsCreateTaskModalOpen(true); setIsCreateMenuOpen(false) } },
+                    { label: "New Board", dot: "bg-blue-500",   action: () => { setIsCreateBoardModalOpen(true); setIsCreateMenuOpen(false) } },
+                    { label: "New Team",  dot: "bg-green-500",  action: () => { navigate("/teams"); setIsCreateMenuOpen(false) } },
+                  ].map(({ label, dot, action }) => (
+                    <DropdownMenuItem key={label} onClick={action} className="flex items-center gap-2 text-slate-300 hover:text-white hover:bg-white/5 cursor-pointer">
+                      <span className={`w-2 h-2 rounded-full ${dot}`} aria-hidden="true" />
+                      {label}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
               {/* Notifications */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="relative hover:bg-blue-50 transition-colors">
-                    <Bell className="h-5 w-5 text-gray-600 hover:text-blue-600 transition-colors" />
+                  <Button variant="ghost" size="sm" aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`} className="relative p-2 text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                    <Bell className="h-4.5 w-4.5" aria-hidden="true" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center shadow-lg animate-pulse">
+                      <span aria-hidden="true" className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-violet-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                         {unreadCount > 9 ? "9+" : unreadCount}
                       </span>
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-80 bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-blue-200 shadow-xl"
-                >
-                  <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-blue-200">
-                    <DropdownMenuLabel className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                      Notifications
-                    </DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-80 bg-[#0d1224] border border-white/10 shadow-2xl p-0">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+                    <DropdownMenuLabel className="text-white font-semibold p-0">Notifications</DropdownMenuLabel>
                     {unreadCount > 0 && (
                       <button
-                        className="text-xs text-blue-600 hover:text-purple-600 hover:underline font-medium transition-colors"
+                        className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
                         onClick={() => markAllReadMutation.mutate()}
                       >
-                        Mark all as read
+                        Mark all read
                       </button>
                     )}
                   </div>
-                  <div className="max-h-80 overflow-auto">
+                  <div className="max-h-72 overflow-y-auto" role="list" aria-label="Notifications list">
                     {(notificationsList?.data?.length ?? 0) === 0 ? (
                       <div className="px-4 py-8 text-center">
-                        <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">No notifications</p>
-                        <p className="text-xs text-gray-400">You're all caught up! 🎉</p>
+                        <Bell className="h-8 w-8 text-slate-600 mx-auto mb-2" aria-hidden="true" />
+                        <p className="text-sm text-slate-500">No notifications</p>
+                        <p className="text-xs text-slate-600 mt-1">You&apos;re all caught up!</p>
                       </div>
                     ) : (
                       notificationsList?.data?.map((n: any) => (
-                        <div
-                          key={n.id}
-                          className="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-white/50 transition-colors"
-                        >
+                        <div key={n.id} role="listitem" className="px-4 py-3 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.03] transition-colors">
                           <div className="flex items-start gap-3">
-                            <div
-                              className={`mt-1 h-2 w-2 rounded-full ${n.read_at ? "bg-gray-300" : "bg-gradient-to-r from-blue-500 to-purple-500"} shadow-sm`}
-                            />
-                            <div className="flex-1">
-                              <div className="text-sm text-gray-800 font-medium">{renderNotificationText(n)}</div>
-                              <div className="text-xs text-gray-500 mt-1 flex items-center space-x-1">
-                                <span>{new Date(n.created_at).toLocaleString()}</span>
-                                {!n.read_at && <span className="inline-block w-1 h-1 bg-blue-500 rounded-full"></span>}
-                              </div>
+                            <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${n.read_at ? "bg-slate-600" : "bg-violet-500"}`} aria-hidden="true" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-slate-300">{renderNotificationText(n)}</p>
+                              <p className="text-xs text-slate-600 mt-1">{new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short" }).format(new Date(n.created_at))}</p>
                             </div>
                           </div>
                         </div>
@@ -337,242 +245,119 @@ export const Header: React.FC = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* User Menu */}
+              {/* User menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full hover:ring-2 hover:ring-blue-200 transition-all"
-                  >
-                    <Avatar className="h-8 w-8 ring-2 ring-white shadow-sm">
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 hover:ring-2 hover:ring-violet-500/50 transition-all focus-visible:ring-2 focus-visible:ring-violet-500">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
+                      <AvatarFallback className="bg-violet-600 text-white text-xs font-bold">
                         {user?.name ? getInitials(user.name) : "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-64 bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-blue-200 shadow-xl"
-                  align="end"
-                  forceMount
-                >
-                  {/* User Info Header */}
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-blue-200">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg">
+                <DropdownMenuContent className="w-60 bg-[#0d1224] border border-white/10 shadow-2xl p-0" align="end" forceMount>
+                  {/* User info */}
+                  <div className="p-4 border-b border-white/[0.06]">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 ring-2 ring-violet-500/30">
                         <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-lg">
+                        <AvatarFallback className="bg-violet-600 text-white font-bold">
                           {user?.name ? getInitials(user.name) : "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 truncate">{user?.name || "User"}</p>
-                        <p className="text-xs text-gray-600 truncate">{user?.email || "user@example.com"}</p>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-green-600 font-medium">Online</span>
+                        <p className="text-sm font-semibold text-white truncate">{user?.name || "User"}</p>
+                        <p className="text-xs text-slate-500 truncate">{user?.email || ""}</p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden="true" />
+                          <span className="text-xs text-green-500">Online</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Navigation Items */}
-                  <div className="py-2">
-                    <DropdownMenuItem
-                      asChild
-                      className="mx-2 mb-1 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all duration-200"
-                    >
-                      <Link to="/profile" className="flex items-center space-x-3 px-3 py-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-900">Profile</span>
-                          <p className="text-xs text-gray-500">Manage your account</p>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      asChild
-                      className="mx-2 mb-1 rounded-lg hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 cursor-pointer transition-all duration-200"
-                    >
-                      <Link to="/settings" className="flex items-center space-x-3 px-3 py-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-900">Settings</span>
-                          <p className="text-xs text-gray-500">Preferences & privacy</p>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem
-                      asChild
-                      className="mx-2 mb-1 rounded-lg hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 cursor-pointer transition-all duration-200"
-                    >
-                      <Link to="/help" className="flex items-center space-x-3 px-3 py-2">
-                        <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-900">Help & Support</span>
-                          <p className="text-xs text-gray-500">Get help and tutorials</p>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
+                  <div className="p-1">
+                    {[
+                      { label: "Profile", sub: "Manage your account", href: "/profile", icon: User },
+                      { label: "Settings", sub: "Preferences & privacy", href: "/settings", icon: Settings },
+                    ].map(({ label, sub, href, icon: Icon }) => (
+                      <DropdownMenuItem key={href} asChild className="rounded-lg cursor-pointer hover:bg-white/5 focus:bg-white/5 p-0">
+                        <Link to={href} className="flex items-center gap-3 px-3 py-2.5 w-full">
+                          <div className="w-7 h-7 rounded-lg bg-violet-600/20 flex items-center justify-center flex-shrink-0">
+                            <Icon className="h-3.5 w-3.5 text-violet-400" aria-hidden="true" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-slate-200">{label}</span>
+                            <p className="text-xs text-slate-500">{sub}</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
                   </div>
 
-                  <DropdownMenuSeparator className="mx-2 bg-gradient-to-r from-gray-200 to-gray-300" />
+                  <DropdownMenuSeparator className="bg-white/[0.06] mx-2" />
 
-                  {/* Logout */}
-                  <div className="py-2">
+                  <div className="p-1">
                     <DropdownMenuItem
                       onClick={handleLogout}
-                      className="mx-2 rounded-lg hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 cursor-pointer transition-all duration-200 text-red-600 hover:text-red-700"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer transition-colors"
                     >
-                      <div className="flex items-center space-x-3 px-3 py-2 w-full">
-                        <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                            />
-                          </svg>
-                        </div>
-                        <div>
-                          <span className="font-medium">Sign Out</span>
-                          <p className="text-xs text-gray-500">See you later! 👋</p>
-                        </div>
+                      <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                        <LogOut className="h-3.5 w-3.5 text-red-400" aria-hidden="true" />
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium">Sign Out</span>
+                        <p className="text-xs text-slate-500">See you later!</p>
                       </div>
                     </DropdownMenuItem>
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Mobile Menu Button */}
+              {/* Mobile toggle */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden hover:bg-blue-50 transition-colors"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isMobileMenuOpen}
+                className="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                onClick={() => setIsMobileMenuOpen((o) => !o)}
               >
-                {isMobileMenuOpen ? (
-                  <X className="h-5 w-5 text-gray-600" />
-                ) : (
-                  <Menu className="h-5 w-5 text-gray-600" />
-                )}
+                {isMobileMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
               </Button>
             </div>
           </div>
 
-          {/* Mobile Menu */}
+          {/* Mobile menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200 py-4 bg-gradient-to-r from-blue-50 to-purple-50">
-              <div className="flex flex-col space-y-2">
-                <Link
-                  to="/dashboard"
-                  className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  to="/boards"
-                  className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Boards
-                </Link>
-                <Link
-                  to="/teams"
-                  className="text-gray-600 hover:text-green-600 hover:bg-green-50 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Teams
-                </Link>
-                <div className="pt-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        size="sm"
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-48 bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-blue-200 shadow-xl"
-                    >
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setIsCreateBoardModalOpen(true)
-                          setIsMobileMenuOpen(false)
-                        }}
-                        className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 cursor-pointer"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                          <span>New Board</span>
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          navigate("/teams")
-                          setIsMobileMenuOpen(false)
-                          // We'll use the existing create team functionality in TeamsPage
-                          setTimeout(() => {
-                            const createTeamButton = document.querySelector("[data-create-team-button]")
-                            if (createTeamButton) {
-                              ;(createTeamButton as HTMLButtonElement).click()
-                            }
-                          }, 100)
-                        }}
-                        className="hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 cursor-pointer"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span>New Team</span>
-                        </div>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            <nav className="md:hidden border-t border-white/[0.06] py-3" aria-label="Mobile navigation">
+              <div className="flex flex-col gap-1">
+                {appNav.map(({ label, href }) => (
+                  <Link
+                    key={href}
+                    to={href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive(href) ? "bg-violet-600/15 text-violet-400" : "text-slate-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))}
+                <div className="pt-2 mt-1 border-t border-white/[0.06]">
+                  <Button
+                    size="sm"
+                    className="w-full bg-violet-600 hover:bg-violet-500 text-white font-medium transition-colors"
+                    onClick={() => { setIsCreateBoardModalOpen(true); setIsMobileMenuOpen(false) }}
+                  >
+                    <Plus className="h-4 w-4 mr-1.5" aria-hidden="true" />
+                    New Board
+                  </Button>
                 </div>
               </div>
-            </div>
+            </nav>
           )}
         </div>
       </header>
@@ -582,118 +367,72 @@ export const Header: React.FC = () => {
         isOpen={isCreateTaskModalOpen}
         onClose={() => setIsCreateTaskModalOpen(false)}
         onSubmit={(taskData) => {
-          // If we have a boardId (we're on a board page), use it
           if (boardId) {
-            createTask({
-              ...taskData,
-              board_id: boardId,
-            })
+            createTask({ ...taskData, board_id: boardId })
           } else {
-            // Check if there are any boards
-            boardsAPI
-              .getBoards()
-              .then((response) => {
-                if (response?.data?.length > 0) {
-                  // If boards exist, prompt to select one
-                  toast({
-                    title: "Board Required",
-                    description: "Please select a board to create a task",
-                  })
-                  navigate("/boards")
-                } else {
-                  // If no boards exist, prompt to create one first
-                  toast({
-                    title: "No Boards Found",
-                    description: "You need to create a board before adding tasks",
-                  })
-                  setIsCreateBoardModalOpen(true)
-                }
-              })
-              .catch(() => {
-                // If API call fails, show generic message
-                toast({
-                  title: "Board Required",
-                  description: "Please create or select a board first",
-                })
+            boardsAPI.getBoards().then((response) => {
+              if (response?.data?.length > 0) {
+                toast({ title: "Select a board", description: "Please open a board to create a task." })
                 navigate("/boards")
-              })
+              } else {
+                toast({ title: "No boards found", description: "Create a board first." })
+                setIsCreateBoardModalOpen(true)
+              }
+            }).catch(() => { navigate("/boards") })
           }
         }}
-        columnId="todo" // Default column for new tasks
+        columnId="todo"
       />
 
       {/* Create Board Modal */}
       <Dialog open={isCreateBoardModalOpen} onOpenChange={setIsCreateBoardModalOpen}>
-        <DialogContent className="sm:max-w-md bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-blue-200">
+        <DialogContent className="sm:max-w-md bg-[#0d1224] border border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Create New Board
-            </DialogTitle>
+            <DialogTitle className="text-white font-bold">Create New Board</DialogTitle>
           </DialogHeader>
-
-          <form onSubmit={handleCreateBoard} className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <label htmlFor="board-name" className="text-sm font-bold text-gray-800">
-                Board Name
-              </label>
+          <form onSubmit={handleCreateBoard} className="space-y-4 pt-2">
+            <div>
+              <label htmlFor="board-name" className="block text-sm font-medium text-slate-300 mb-2">Board Name</label>
               <Input
                 id="board-name"
                 value={newBoard.name}
                 onChange={(e) => setNewBoard({ ...newBoard, name: e.target.value })}
-                placeholder="Enter board name"
-                className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="e.g. Q2 Roadmap…"
                 required
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-violet-500"
               />
             </div>
-
-            <div className="space-y-2">
-              <label htmlFor="board-description" className="text-sm font-bold text-gray-800">
-                Description
-              </label>
+            <div>
+              <label htmlFor="board-description" className="block text-sm font-medium text-slate-300 mb-2">Description <span className="text-slate-600">(optional)</span></label>
               <Textarea
                 id="board-description"
                 value={newBoard.description}
                 onChange={(e) => setNewBoard({ ...newBoard, description: e.target.value })}
-                placeholder="Enter board description"
-                className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="What's this board for?…"
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-violet-500 resize-none"
                 rows={3}
               />
             </div>
-
-            <div className="space-y-2">
-              <label htmlFor="team-id" className="text-sm font-bold text-gray-800">
-                Team (Optional)
-              </label>
+            <div>
+              <label htmlFor="board-team" className="block text-sm font-medium text-slate-300 mb-2">Team <span className="text-slate-600">(optional)</span></label>
               <select
-                id="team-id"
+                id="board-team"
                 value={selectedTeamId}
                 onChange={(e) => setSelectedTeamId(e.target.value)}
-                className="w-full px-3 py-2 bg-white border-2 border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-slate-300 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:border-violet-500"
               >
-                <option value="">No team (Personal Board)</option>
+                <option value="" className="bg-[#0d1224]">No team (Personal Board)</option>
                 {teamsData?.data?.map((team: any) => (
-                  <option key={team.id} value={team.id}>
-                    {team.name}
-                  </option>
+                  <option key={team.id} value={team.id} className="bg-[#0d1224]">{team.name}</option>
                 ))}
               </select>
             </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsCreateBoardModalOpen(false)}
-                className="border-2 border-gray-300 hover:bg-gray-50"
-              >
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsCreateBoardModalOpen(false)} className="border-white/10 text-slate-300 hover:bg-white/5">
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={createBoardMutation.isLoading}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-              >
-                {createBoardMutation.isLoading ? "Creating..." : "Create Board"}
+              <Button type="submit" disabled={createBoardMutation.isLoading} className="bg-violet-600 hover:bg-violet-500 text-white">
+                {createBoardMutation.isLoading ? "Creating…" : "Create Board"}
               </Button>
             </div>
           </form>

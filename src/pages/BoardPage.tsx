@@ -590,24 +590,12 @@ const BoardPage: React.FC = () => {
 
   if (boardLoading || tasksLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400 to-pink-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
-          <div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-10 animate-spin"
-            style={{ animationDuration: "20s" }}
-          ></div>
-        </div>
-
-        <div className="relative z-10">
-          <Header />
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <LoadingSpinner />
-              <p className="mt-4 text-gray-600 animate-pulse">Loading your awesome board...</p>
-            </div>
+      <div className="min-h-screen bg-[#050816]">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <LoadingSpinner />
+            <p className="mt-4 text-slate-400 animate-pulse">Loading your board...</p>
           </div>
         </div>
       </div>
@@ -616,27 +604,15 @@ const BoardPage: React.FC = () => {
 
   if (!board?.data && !boardLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400 to-pink-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
-          <div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-10 animate-spin"
-            style={{ animationDuration: "20s" }}
-          ></div>
-        </div>
-
-        <div className="relative z-10">
-          <Header />
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <div className="text-6xl mb-4">🔍</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Board Not Found</h2>
-              <p className="text-gray-600">
-                The board you're looking for doesn't exist or you don't have access to it.
-              </p>
-            </div>
+      <div className="min-h-screen bg-[#050816]">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🔍</div>
+            <h2 className="text-2xl font-bold text-white mb-2">Board Not Found</h2>
+            <p className="text-slate-400">
+              The board you're looking for doesn't exist or you don't have access to it.
+            </p>
           </div>
         </div>
       </div>
@@ -656,18 +632,8 @@ const BoardPage: React.FC = () => {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400 to-pink-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-10 animate-spin"
-          style={{ animationDuration: "20s" }}
-        ></div>
-      </div>
-
-      <div className="relative z-10 flex">
+    <div className="min-h-screen bg-[#050816]">
+      <div className="flex">
         {/* Team Sidebar */}
         <TeamSidebar
           isOpen={isSidebarOpen}
@@ -701,7 +667,7 @@ const BoardPage: React.FC = () => {
           <Header />
 
           <main className="container mx-auto px-4 py-8">
-            {/* Enhanced Header Section */}
+            {/* Header Section */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-4">
@@ -710,7 +676,7 @@ const BoardPage: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className="bg-white/80 backdrop-blur-sm border-2 border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200"
+                    className="border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-violet-600/10 hover:border-violet-500/30 hover:text-violet-300 transition-all duration-200"
                   >
                     {isSidebarOpen ? (
                       <>
@@ -726,10 +692,10 @@ const BoardPage: React.FC = () => {
                   </Button>
 
                   <div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-3xl font-bold text-white mb-1">
                       {board?.data?.name || board?.name || "Board"}
                     </h1>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-slate-400 text-sm">
                       {board?.data?.description ||
                         board?.description ||
                         "Manage your team's tasks with drag-and-drop simplicity"}
@@ -737,38 +703,38 @@ const BoardPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-6">
                   {/* Permission Indicator */}
                   {permissions.userRole && (
                     <div className="text-right">
-                      <div className="text-sm text-gray-500">Your Access</div>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-sm font-bold text-blue-600">
+                      <div className="text-xs text-slate-500 mb-0.5">Your Access</div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-sm font-semibold text-violet-400">
                           {permissions.userRole === "owner" && "👑 Owner"}
                           {permissions.userRole === "admin" && "⚡ Admin"}
                           {permissions.userRole === "member" && "👤 Member"}
                           {permissions.userRole === "viewer" && "👁️ Viewer"}
                         </span>
-                        {permissions.isViewer && <span className="text-xs text-gray-500">(Read-only)</span>}
+                        {permissions.isViewer && <span className="text-xs text-slate-500">(Read-only)</span>}
                       </div>
                     </div>
                   )}
 
                   <div className="text-right">
-                    <div className="text-sm text-gray-500">Progress</div>
-                    <div className="text-2xl font-bold text-green-600">{progressPercentage}%</div>
+                    <div className="text-xs text-slate-500 mb-0.5">Progress</div>
+                    <div className="text-2xl font-bold text-emerald-400">{progressPercentage}%</div>
                   </div>
-                  <div className="w-16 h-16 relative">
-                    <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                  <div className="w-14 h-14 relative">
+                    <svg className="w-14 h-14 transform -rotate-90" viewBox="0 0 36 36">
                       <path
-                        className="text-gray-200"
+                        className="text-white/10"
                         stroke="currentColor"
                         strokeWidth="3"
                         fill="none"
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                       <path
-                        className="text-green-500"
+                        className="text-emerald-500"
                         stroke="currentColor"
                         strokeWidth="3"
                         strokeDasharray={`${progressPercentage}, 100`}
@@ -778,76 +744,83 @@ const BoardPage: React.FC = () => {
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <Sparkles className="h-6 w-6 text-green-500" />
+                      <Sparkles className="h-5 w-5 text-emerald-400" />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-4 text-white">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
+                <div className="rounded-xl p-4 border border-violet-500/20 bg-gradient-to-br from-violet-600/15 to-blue-600/10">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-blue-100 text-sm">Total Tasks</p>
-                      <p className="text-2xl font-bold">{totalTasks}</p>
+                      <p className="text-slate-400 text-xs font-medium mb-1">Total Tasks</p>
+                      <p className="text-2xl font-bold text-white">{totalTasks}</p>
                     </div>
-                    <Target className="h-8 w-8 text-blue-200" />
+                    <div className="p-2.5 rounded-xl bg-violet-500/15">
+                      <Target className="h-5 w-5 text-violet-400" />
+                    </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-4 text-white">
+                <div className="rounded-xl p-4 border border-amber-500/20 bg-gradient-to-br from-amber-600/15 to-orange-600/10">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-yellow-100 text-sm">In Progress</p>
-                      <p className="text-2xl font-bold">{inProgressTasks}</p>
+                      <p className="text-slate-400 text-xs font-medium mb-1">In Progress</p>
+                      <p className="text-2xl font-bold text-white">{inProgressTasks}</p>
                     </div>
-                    <Clock className="h-8 w-8 text-yellow-200" />
+                    <div className="p-2.5 rounded-xl bg-amber-500/15">
+                      <Clock className="h-5 w-5 text-amber-400" />
+                    </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 text-white">
+                <div className="rounded-xl p-4 border border-purple-500/20 bg-gradient-to-br from-purple-600/15 to-pink-600/10">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-100 text-sm">In Review</p>
-                      <p className="text-2xl font-bold">{reviewTasks}</p>
+                      <p className="text-slate-400 text-xs font-medium mb-1">In Review</p>
+                      <p className="text-2xl font-bold text-white">{reviewTasks}</p>
                     </div>
-                    <Users className="h-8 w-8 text-purple-200" />
+                    <div className="p-2.5 rounded-xl bg-purple-500/15">
+                      <Users className="h-5 w-5 text-purple-400" />
+                    </div>
                   </div>
                 </div>
-                <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl p-4 text-white">
+                <div className="rounded-xl p-4 border border-emerald-500/20 bg-gradient-to-br from-emerald-600/15 to-teal-600/10">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-green-100 text-sm">Completed</p>
-                      <p className="text-2xl font-bold">{completedTasks}</p>
+                      <p className="text-slate-400 text-xs font-medium mb-1">Completed</p>
+                      <p className="text-2xl font-bold text-white">{completedTasks}</p>
                     </div>
-                    <Sparkles className="h-8 w-8 text-green-200" />
+                    <div className="p-2.5 rounded-xl bg-emerald-500/15">
+                      <Sparkles className="h-5 w-5 text-emerald-400" />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm text-gray-600 bg-white/50 backdrop-blur-sm rounded-lg p-4">
+              {/* Info Bar */}
+              <div className="flex items-center justify-between text-xs text-slate-500 bg-white/[0.03] border border-white/[0.05] rounded-xl px-4 py-3">
                 <div className="flex items-center space-x-4">
                   <span>
-                    Member: <span className="font-semibold capitalize text-blue-600">TaskFlow User</span>
+                    Member: <span className="font-medium text-slate-300">TaskFlow User</span>
                   </span>
-                  <span>•</span>
+                  <span className="text-white/10">•</span>
                   <span>
-                    Board ID: <span className="font-mono text-gray-800">#{boardId?.slice(-6)}</span>
+                    Board ID: <span className="font-mono text-slate-400">#{boardId?.slice(-6)}</span>
                   </span>
-                  <span>•</span>
+                  <span className="text-white/10">•</span>
                   <span>
-                    Teams: <span className="font-medium text-purple-600">{currentBoardTeams.length}</span>
+                    Teams: <span className="font-medium text-violet-400">{currentBoardTeams.length}</span>
                   </span>
                 </div>
-                <div className="text-right">
-                  <span>
-                    Last updated: <span className="font-medium">Just now</span>
-                  </span>
+                <div>
+                  Last updated: <span className="text-slate-400">Just now</span>
                 </div>
               </div>
             </div>
 
             {/* Kanban Board */}
-      {columns.length > 0 ? (
+            {columns.length > 0 ? (
               <KanbanBoard
                 columns={columns}
                 onTaskMove={handleTaskMove}
@@ -862,12 +835,12 @@ const BoardPage: React.FC = () => {
               />
             ) : (
               <div className="text-center py-16">
-                <div className="max-w-md mx-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 border-2 border-gray-200">
-                  <div className="text-6xl mb-4">🚀</div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Ready to Get Started?</h3>
-                  <p className="text-gray-600 mb-6">
+                <div className="max-w-md mx-auto glass rounded-2xl p-8">
+                  <div className="text-5xl mb-4">🚀</div>
+                  <h3 className="text-xl font-bold text-white mb-3">Ready to Get Started?</h3>
+                  <p className="text-slate-400 text-sm mb-6">
                     {permissions.canCreateTasks
-                      ? "Create your first task and watch the magic happen with our beautiful drag-and-drop interface!"
+                      ? "Create your first task and watch the magic happen with our drag-and-drop interface!"
                       : permissions.isViewer
                         ? "You have viewer access to this board. Ask an admin or owner to create tasks."
                         : "You need team access to create tasks on this board."}
@@ -875,13 +848,13 @@ const BoardPage: React.FC = () => {
                   {permissions.canCreateTasks ? (
                     <button
                       onClick={handleCreateSampleTask}
-                      className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:scale-105 transition-all duration-200"
+                      className="inline-flex items-center px-6 py-2.5 text-sm font-semibold rounded-xl text-white bg-violet-600 hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 focus:ring-offset-[#050816] transition-colors duration-200"
                     >
-                      <Sparkles className="h-5 w-5 mr-2" />
+                      <Sparkles className="h-4 w-4 mr-2" />
                       Create Your First Task
                     </button>
                   ) : (
-                    <div className="text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-lg">
+                    <div className="text-sm text-slate-500 bg-white/[0.04] border border-white/10 px-4 py-2 rounded-xl">
                       {permissions.isViewer ? "👁️ View-only access" : "🔒 No permission to create tasks"}
                     </div>
                   )}
