@@ -498,6 +498,27 @@ export const authAPI = {
     }
   },
 
+  registerAndAccept: async (token: string, name: string, password: string, passwordConfirmation: string) => {
+    logger.log("Registering new user and accepting invitation")
+    try {
+      const response = await api.post(`/invitations/${token}/register-and-accept`, {
+        name,
+        password,
+        password_confirmation: passwordConfirmation,
+      })
+      logger.log("Registration and acceptance successful")
+
+      const authToken = response.data?.data?.token
+      if (authToken) {
+        localStorage.setItem("token", authToken)
+      }
+
+      return response.data
+    } catch (error: any) {
+      throw error
+    }
+  },
+
   changePassword: async (currentPassword: string, password: string, passwordConfirmation: string) => {
     try {
       await authAPI.getCsrfCookie()
