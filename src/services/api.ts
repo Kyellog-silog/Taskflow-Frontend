@@ -1203,8 +1203,11 @@ export const commentsAPI = {
 
 // Notifications API
 export const notificationsAPI = {
-  list: async (limit = 10) => {
-    const response = await api.get(`/notifications?limit=${limit}`)
+  list: async (limit = 10, afterId?: string, type?: string) => {
+    const params = new URLSearchParams({ limit: String(limit) })
+    if (afterId) params.set("after_id", afterId)
+    if (type)    params.set("type", type)
+    const response = await api.get(`/notifications?${params.toString()}`)
     return response.data
   },
   getUnreadCount: async () => {
@@ -1212,36 +1215,23 @@ export const notificationsAPI = {
     return response.data
   },
   markRead: async (notificationId: string) => {
-    try {
-      await authAPI.getCsrfCookie()
-      const response = await api.post(`/notifications/${notificationId}/read`)
-      
-      safeToast({
-        title: "Notification Marked as Read",
-        description: "The notification has been marked as read.",
-        variant: "default",
-      })
-      
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    await authAPI.getCsrfCookie()
+    const response = await api.post(`/notifications/${notificationId}/read`)
+    return response.data
   },
   markAllRead: async () => {
-    try {
-      await authAPI.getCsrfCookie()
-      const response = await api.post(`/notifications/read-all`)
-      
-      safeToast({
-        title: "All Notifications Read",
-        description: "All notifications have been marked as read.",
-        variant: "default",
-      })
-      
-      return response.data
-    } catch (error: any) {
-      throw error
-    }
+    await authAPI.getCsrfCookie()
+    const response = await api.post(`/notifications/read-all`)
+    safeToast({
+      title: "All Notifications Read",
+      description: "All notifications have been marked as read.",
+      variant: "default",
+    })
+    return response.data
+  },
+  deleteNotification: async (notificationId: string) => {
+    await authAPI.getCsrfCookie()
+    await api.delete(`/notifications/${notificationId}`)
   },
 }
 

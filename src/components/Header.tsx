@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu"
-import { Bell, Search, Plus, Menu, X, LayoutDashboard, Kanban, Users, User, Settings, LogOut } from "lucide-react"
+import { Bell, Search, Plus, Menu, X, LayoutDashboard, Kanban, Users, User, Settings, LogOut, Trash2 } from "lucide-react"
 import { CreateTaskModal } from "./CreateTaskModal"
 import { useTasks } from "../hooks/useTasks"
 import { useToast } from "../hooks/use-toast"
@@ -22,7 +22,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { boardsAPI, teamsAPI, notificationsAPI } from "../services/api"
-import { storageService } from "../services/storage"
 import { useQuery, useMutation, useQueryClient } from "react-query"
 import { Logo } from "./Logo"
 
@@ -63,23 +62,11 @@ export const Header: React.FC = () => {
 
   const { data: teamsData } = useQuery({ queryKey: ["teams"], queryFn: teamsAPI.getTeams, staleTime: 5 * 60 * 1000 })
 
-  const prevUnreadRef = React.useRef<number>(0)
   const { data: unreadCountData } = useQuery({
     queryKey: ["notifications", "unread-count"],
     queryFn: notificationsAPI.getUnreadCount,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
-    onSuccess: (data) => {
-      try {
-        const current = data?.data?.count ?? 0
-        if (current > prevUnreadRef.current) {
-          const soundOn = storageService.getItem<boolean>("notif_sound_enabled") ?? true
-          const volume = (storageService.getItem<number>("notif_sound_volume") ?? 70) / 100
-          if (soundOn) { const a = new Audio("/sounds/notify.mp3"); a.volume = volume; a.play().catch(() => {}) }
-        }
-        prevUnreadRef.current = current
-      } catch {}
-    },
   })
   const unreadCount = unreadCountData?.data?.count ?? 0
 
@@ -90,6 +77,20 @@ export const Header: React.FC = () => {
   })
 
   const markAllReadMutation = useMutation(notificationsAPI.markAllRead, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notifications", "unread-count"])
+      queryClient.invalidateQueries(["notifications", "list"])
+    },
+  })
+
+  const markReadMutation = useMutation(notificationsAPI.markRead, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notifications", "unread-count"])
+      queryClient.invalidateQueries(["notifications", "list"])
+    },
+  })
+
+  const deleteNotificationMutation = useMutation(notificationsAPI.deleteNotification, {
     onSuccess: () => {
       queryClient.invalidateQueries(["notifications", "unread-count"])
       queryClient.invalidateQueries(["notifications", "list"])
@@ -117,10 +118,11 @@ export const Header: React.FC = () => {
     name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   const renderNotificationText = (n: any) => {
+    const actor = n.data?.actor_name ?? "Someone"
     switch (n.type) {
-      case "task.assigned":  return "You've been assigned to a task."
-      case "task.completed": return "A task was marked as completed."
-      case "comment.created": return "New comment on a task you're involved in."
+      case "task.assigned":  return `${actor} assigned you to a task.`
+      case "task.completed": return `${actor} completed a task.`
+      case "comment.created": return `${actor} commented on a task you're involved in.`
       default: return "Update in your workspace."
     }
   }
@@ -214,10 +216,11 @@ export const Header: React.FC = () => {
                     <DropdownMenuLabel className="text-white font-semibold p-0">Notifications</DropdownMenuLabel>
                     {unreadCount > 0 && (
                       <button
-                        className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded"
+                        className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded disabled:opacity-40 disabled:cursor-not-allowed"
                         onClick={() => markAllReadMutation.mutate()}
+                        disabled={markAllReadMutation.isLoading}
                       >
-                        Mark all read
+                        {markAllReadMutation.isLoading ? "Marking…" : "Mark all read"}
                       </button>
                     )}
                   </div>
@@ -230,13 +233,25 @@ export const Header: React.FC = () => {
                       </div>
                     ) : (
                       notificationsList?.data?.map((n: any) => (
-                        <div key={n.id} role="listitem" className="px-4 py-3 border-b border-white/[0.04] last:border-b-0 hover:bg-white/[0.03] transition-colors">
+                        <div
+                          key={n.id}
+                          role="listitem"
+                          className={`group px-4 py-3 border-b border-white/[0.04] last:border-b-0 transition-colors cursor-pointer ${n.read_at ? "hover:bg-white/[0.02]" : "hover:bg-violet-500/[0.05]"}`}
+                          onClick={() => { if (!n.read_at) markReadMutation.mutate(n.id) }}
+                        >
                           <div className="flex items-start gap-3">
                             <span className={`mt-1.5 h-1.5 w-1.5 rounded-full flex-shrink-0 ${n.read_at ? "bg-slate-600" : "bg-violet-500"}`} aria-hidden="true" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-slate-300">{renderNotificationText(n)}</p>
+                              <p className={`text-sm ${n.read_at ? "text-slate-500" : "text-slate-300"}`}>{renderNotificationText(n)}</p>
                               <p className="text-xs text-slate-600 mt-1">{new Intl.DateTimeFormat(undefined, { dateStyle: "short", timeStyle: "short" }).format(new Date(n.created_at))}</p>
                             </div>
+                            <button
+                              aria-label="Delete notification"
+                              className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"
+                              onClick={(e) => { e.stopPropagation(); deleteNotificationMutation.mutate(n.id) }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
                           </div>
                         </div>
                       ))
