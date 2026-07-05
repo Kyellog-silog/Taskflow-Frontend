@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useMutation, useQueryClient } from "react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -25,19 +25,17 @@ export function CreateBoardModal({ onBoardCreated }: CreateBoardModalProps) {
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
-  const createBoardMutation = useMutation(
-    async (boardData: any) => {
+  const createBoardMutation = useMutation({
+    mutationFn: async (boardData: any) => {
       const response = await boardsAPI.createBoard(boardData)
       return response
     },
-    {
-      onSuccess: (data) => {
+    onSuccess: (data) => {
         // Invalidate and refetch boards list
-        queryClient.invalidateQueries("boards")
-        queryClient.invalidateQueries(["boards"])
+        queryClient.invalidateQueries({ queryKey: ["boards"] })
 
         // Optionally, update the cache directly for immediate UI update
-        queryClient.setQueryData("boards", (oldData: any) => {
+        queryClient.setQueryData(["boards"], (oldData: any) => {
           if (oldData?.data) {
             return {
               ...oldData,
@@ -59,15 +57,14 @@ export function CreateBoardModal({ onBoardCreated }: CreateBoardModalProps) {
           description: "Board created successfully!",
         })
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to create board",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -142,7 +139,7 @@ export function CreateBoardModal({ onBoardCreated }: CreateBoardModalProps) {
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
-              disabled={createBoardMutation.isLoading}
+              disabled={createBoardMutation.isPending}
               className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
             >
               <X className="h-4 w-4 mr-2" />
@@ -150,10 +147,10 @@ export function CreateBoardModal({ onBoardCreated }: CreateBoardModalProps) {
             </Button>
             <Button
               type="submit"
-              disabled={createBoardMutation.isLoading}
+              disabled={createBoardMutation.isPending}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
-              {createBoardMutation.isLoading ? (
+              {createBoardMutation.isPending ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Creating Magic...

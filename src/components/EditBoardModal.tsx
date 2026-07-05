@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { useMutation } from "react-query"
+import { useMutation } from "@tanstack/react-query"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -35,28 +35,26 @@ export function EditBoardModal({ board, isOpen, onClose, onBoardUpdated }: EditB
     }
   }, [board])
 
-  const updateBoardMutation = useMutation(
-    async (boardData: any) => {
+  const updateBoardMutation = useMutation({
+    mutationFn: async (boardData: any) => {
       const response = await boardsAPI.updateBoard(board.id, boardData)
       return response
     },
-    {
-      onSuccess: (data) => {
+    onSuccess: (data) => {
         onBoardUpdated(data.data)
         toast({
           title: "Success! ✨",
           description: "Board updated successfully",
         })
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to update board",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,7 +123,7 @@ export function EditBoardModal({ board, isOpen, onClose, onBoardUpdated }: EditB
               type="button"
               variant="outline"
               onClick={onClose}
-              disabled={updateBoardMutation.isLoading}
+              disabled={updateBoardMutation.isPending}
               className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
             >
               <X className="h-4 w-4 mr-2" />
@@ -133,10 +131,10 @@ export function EditBoardModal({ board, isOpen, onClose, onBoardUpdated }: EditB
             </Button>
             <Button
               type="submit"
-              disabled={updateBoardMutation.isLoading}
+              disabled={updateBoardMutation.isPending}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
-              {updateBoardMutation.isLoading ? (
+              {updateBoardMutation.isPending ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Updating...

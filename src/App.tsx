@@ -2,8 +2,8 @@
 
 import * as React from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
-import { QueryClient, QueryClientProvider, setLogger } from "react-query"
-import { ReactQueryDevtools } from "react-query/devtools"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { Toaster } from "./components/ui/toaster"
 import { AuthProvider } from "./contexts/AuthContext"
 import { ThemeProvider } from "./contexts/ThemeContext"
@@ -44,8 +44,7 @@ const queryClient = new QueryClient({
       refetchOnReconnect: true,
       refetchOnMount: true,
       staleTime: 2 * 60 * 1000,
-      cacheTime: 10 * 60 * 1000,
-      suspense: false,
+      gcTime: 10 * 60 * 1000,
     },
     mutations: {
       retry: 1,
@@ -53,15 +52,6 @@ const queryClient = new QueryClient({
   },
 })
 
-if (process.env.NODE_ENV !== "development") {
-  setLogger({
-    log: () => {},
-    warn: () => {},
-    error: (error) => {
-      logger.error(error)
-    },
-  })
-}
 
 function ToastInitializer({ children }: { children: React.ReactNode }) {
   const toastHandler = useToast()
@@ -87,78 +77,78 @@ function SSEBridge() {
     sse.connect({
       // Teams
       "team.updated": () => {
-        queryClient.invalidateQueries(["teams"])
-        queryClient.invalidateQueries(["user-teams", user.id])
-        queryClient.invalidateQueries("board-teams")
-        queryClient.refetchQueries("board-teams", { exact: false })
-        queryClient.invalidateQueries("board")
-        queryClient.refetchQueries("board", { exact: false })
+        queryClient.invalidateQueries({ queryKey: ["teams"] })
+        queryClient.invalidateQueries({ queryKey: ["user-teams", user.id] })
+        queryClient.invalidateQueries({ queryKey: ["board-teams"] })
+        queryClient.refetchQueries({ queryKey: ["board-teams"] })
+        queryClient.invalidateQueries({ queryKey: ["board"] })
+        queryClient.refetchQueries({ queryKey: ["board"] })
       },
       // Boards lifecycle affecting visibility of tasks in counts
       "board.archived": () => {
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["boards"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["boards"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "board.deleted": () => {
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["boards"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["boards"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "board.unarchived": () => {
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["boards"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["boards"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "board.restored": () => {
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["boards"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["boards"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "board.created": () => {
-        queryClient.invalidateQueries(["boards"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        queryClient.invalidateQueries({ queryKey: ["boards"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       // Tasks lifecycle
       "task.created": (d: any) => {
-        if (d?.boardId) queryClient.invalidateQueries(["tasks", d.boardId])
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        if (d?.boardId) queryClient.invalidateQueries({ queryKey: ["tasks", d.boardId] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "task.updated": (d: any) => {
-        if (d?.boardId) queryClient.invalidateQueries(["tasks", d.boardId])
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        if (d?.boardId) queryClient.invalidateQueries({ queryKey: ["tasks", d.boardId] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "task.moved": (d: any) => {
-        if (d?.boardId) queryClient.invalidateQueries(["tasks", d.boardId])
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        if (d?.boardId) queryClient.invalidateQueries({ queryKey: ["tasks", d.boardId] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       "task.deleted": (d: any) => {
-        if (d?.boardId) queryClient.invalidateQueries(["tasks", d.boardId])
-        queryClient.invalidateQueries(["tasks", "due-today"])
-        queryClient.invalidateQueries(["tasks", "due-soon"])
-        queryClient.invalidateQueries(["profile", "activity"])
+        if (d?.boardId) queryClient.invalidateQueries({ queryKey: ["tasks", d.boardId] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-today"] })
+        queryClient.invalidateQueries({ queryKey: ["tasks", "due-soon"] })
+        queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
       },
       // Comments
       "comment.created": (d: any) => {
-        if (d?.taskId) queryClient.invalidateQueries(["comments", String(d.taskId)])
+        if (d?.taskId) queryClient.invalidateQueries({ queryKey: ["comments", String(d.taskId)] })
       },
       "comment.deleted": (d: any) => {
-        if (d?.taskId) queryClient.invalidateQueries(["comments", String(d.taskId)])
+        if (d?.taskId) queryClient.invalidateQueries({ queryKey: ["comments", String(d.taskId)] })
       },
       // Notifications
       "notification.created": () => {
-        queryClient.invalidateQueries(["notifications", "unread-count"])
-        queryClient.invalidateQueries(["notifications", "list"])
+        queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] })
+        queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
         try {
           const enabled = (window as any).localStorage
             ? JSON.parse(localStorage.getItem("notif_sound_enabled") || "true")

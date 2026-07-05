@@ -1,6 +1,6 @@
 // Enhanced task movement hook with operation tracking and conflict resolution
 import { useState, useRef, useCallback } from 'react'
-import { useMutation, useQueryClient } from 'react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useToast } from './use-toast'
 import { tasksAPI } from '../services/api'
 import logger from '../lib/logger'
@@ -62,14 +62,14 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
   }
 
   // Enhanced move task mutation with conflict resolution
-  const moveTaskMutation = useMutation(
-    async ({ 
-      taskId, 
-      columnId, 
-      position, 
-      operationId, 
-      clientTimestamp 
-    }: { 
+  const moveTaskMutation = useMutation({
+    mutationFn: async ({
+      taskId,
+      columnId,
+      position,
+      operationId,
+      clientTimestamp
+    }: {
       taskId: string
       columnId: string
       position: number
@@ -81,8 +81,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
         client_timestamp: clientTimestamp
       })
     },
-    {
-      onSuccess: (data, variables) => {
+    onSuccess: (data, variables) => {
         removePendingOperation(variables.operationId)
         delete rollbackDataRef.current[variables.taskId]
 
@@ -100,7 +99,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
           })
         }
       },
-      onError: (error: any, variables) => {
+    onError: (error: any, variables) => {
         removePendingOperation(variables.operationId)
 
         // Restore the pre-move cache snapshot for instant rollback
@@ -109,7 +108,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
           queryClient.setQueryData(["tasks", boardId], rollback)
           delete rollbackDataRef.current[variables.taskId]
         } else {
-          queryClient.invalidateQueries(["tasks", boardId])
+          queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
         }
 
         // Handle conflicts gracefully
@@ -119,7 +118,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
 
           if (conflictData.time_difference && conflictData.time_difference < 2000) {
             logger.log('Rapid move conflict, refreshing state silently')
-            queryClient.invalidateQueries(["tasks", boardId])
+            queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
             return
           }
 
@@ -128,7 +127,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
             description: "The task was moved by someone else. Refreshing...",
             variant: "default"
           })
-          queryClient.invalidateQueries(["tasks", boardId])
+          queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
           return
         }
 
@@ -138,8 +137,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
           variant: "destructive",
         })
       },
-    }
-  )
+  })
 
   // Enhanced move handler with optimistic updates and operation tracking
   const handleTaskMove = useCallback((
@@ -152,7 +150,7 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
     const now = Date.now()
 
     // 1. Cancel any in-flight refetches so they can't overwrite the optimistic state
-    queryClient.cancelQueries(["tasks", boardId])
+    queryClient.cancelQueries({ queryKey: ["tasks", boardId] })
 
     // 2. Snapshot the cache BEFORE updating — used for rollback on error
     rollbackDataRef.current[taskId] = queryClient.getQueryData(["tasks", boardId])
@@ -198,6 +196,6 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
     handleTaskMove,
     pendingOperations,
     hasPendingOperations,
-    isLoading: moveTaskMutation.isLoading
+    isLoading: moveTaskMutation.isPending
   }
 }

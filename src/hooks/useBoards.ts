@@ -1,48 +1,51 @@
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { boardsAPI } from "../services/api"
 
 export const useBoards = (type: 'active' | 'archived' | 'deleted' | 'recent' = 'active', limit?: number) => {
   const queryClient = useQueryClient()
 
-  const boardsQuery = useQuery(
-    ["boards", type, limit], 
-    () => boardsAPI.getBoards(type, limit),
-    {
-  // Idle-friendly defaults; SSE will invalidate when needed
-  refetchOnWindowFocus: false,
-  refetchOnMount: false,
-  refetchInterval: false,
-  staleTime: 5 * 60 * 1000,
-    }
-  )
+  const boardsQuery = useQuery({
+    queryKey: ["boards", type, limit],
+    queryFn: () => boardsAPI.getBoards(type, limit),
+    // Idle-friendly defaults; SSE will invalidate when needed
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const createBoardMutation = useMutation(boardsAPI.createBoard, {
+  const createBoardMutation = useMutation({
+    mutationFn: boardsAPI.createBoard,
     onSuccess: () => {
-      queryClient.invalidateQueries("boards")
+      queryClient.invalidateQueries({ queryKey: ["boards"] })
     },
   })
 
-  const deleteBoardMutation = useMutation(boardsAPI.deleteBoard, {
+  const deleteBoardMutation = useMutation({
+    mutationFn: boardsAPI.deleteBoard,
     onSuccess: () => {
-      queryClient.invalidateQueries("boards")
+      queryClient.invalidateQueries({ queryKey: ["boards"] })
     },
   })
 
-  const archiveBoardMutation = useMutation(boardsAPI.archiveBoard, {
+  const archiveBoardMutation = useMutation({
+    mutationFn: boardsAPI.archiveBoard,
     onSuccess: () => {
-      queryClient.invalidateQueries("boards")
+      queryClient.invalidateQueries({ queryKey: ["boards"] })
     },
   })
 
-  const unarchiveBoardMutation = useMutation(boardsAPI.unarchiveBoard, {
+  const unarchiveBoardMutation = useMutation({
+    mutationFn: boardsAPI.unarchiveBoard,
     onSuccess: () => {
-      queryClient.invalidateQueries("boards")
+      queryClient.invalidateQueries({ queryKey: ["boards"] })
     },
   })
 
-  const restoreBoardMutation = useMutation(boardsAPI.restoreBoard, {
+  const restoreBoardMutation = useMutation({
+    mutationFn: boardsAPI.restoreBoard,
     onSuccess: () => {
-      queryClient.invalidateQueries("boards")
+      queryClient.invalidateQueries({ queryKey: ["boards"] })
     },
   })
 
@@ -56,11 +59,11 @@ export const useBoards = (type: 'active' | 'archived' | 'deleted' | 'recent' = '
     archiveBoard: archiveBoardMutation.mutate,
     unarchiveBoard: unarchiveBoardMutation.mutate,
     restoreBoard: restoreBoardMutation.mutate,
-    isCreating: createBoardMutation.isLoading,
-    isDeleting: deleteBoardMutation.isLoading,
-    isArchiving: archiveBoardMutation.isLoading,
-    isUnarchiving: unarchiveBoardMutation.isLoading,
-    isRestoring: restoreBoardMutation.isLoading,
+    isCreating: createBoardMutation.isPending,
+    isDeleting: deleteBoardMutation.isPending,
+    isArchiving: archiveBoardMutation.isPending,
+    isUnarchiving: unarchiveBoardMutation.isPending,
+    isRestoring: restoreBoardMutation.isPending,
   }
 }
 

@@ -11,7 +11,7 @@ import { Badge } from "./ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Separator } from "./ui/separator"
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { commentsAPI } from "../services/api"
 // SSE handled globally in App-level bridge
 import logger from "../lib/logger"
@@ -149,10 +149,11 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
   const priorityConfig = getPriorityConfig(editedTask.priority)
 
   // Load comments for this task
-  const { data: commentsData } = useQuery([
-    "comments",
-    task.id,
-  ], () => commentsAPI.getComments(task.id), { enabled: !!task.id })
+  const { data: commentsData } = useQuery({
+    queryKey: ["comments", task.id],
+    queryFn: () => commentsAPI.getComments(task.id),
+    enabled: !!task.id,
+  })
 
   // Keep editedTask.comments in sync with fetched comments
   useEffect(() => {
@@ -162,27 +163,23 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
   }, [commentsData])
 
   // Post a new top-level comment
-  const addCommentMutation = useMutation(
-    async (content: string) => commentsAPI.createComment(task.id, content),
-    {
-      onSuccess: () => {
+  const addCommentMutation = useMutation({
+    mutationFn: async (content: string) => commentsAPI.createComment(task.id, content),
+    onSuccess: () => {
         setNewComment("")
-        queryClient.invalidateQueries(["comments", task.id])
+        queryClient.invalidateQueries({ queryKey: ["comments", task.id] })
       },
-    },
-  )
+  })
 
   // Post a reply to a comment
-  const addReplyMutation = useMutation(
-    async ({ parentId, content }: { parentId: string; content: string }) =>
+  const addReplyMutation = useMutation({
+    mutationFn: async ({ parentId, content }: { parentId: string; content: string }) =>
       commentsAPI.createComment(task.id, content, parentId),
-    {
-      onSuccess: (_res, vars) => {
+    onSuccess: (_res, vars) => {
         setReplyDrafts((d) => ({ ...d, [vars.parentId]: "" }))
-        queryClient.invalidateQueries(["comments", task.id])
+        queryClient.invalidateQueries({ queryKey: ["comments", task.id] })
       },
-    },
-  )
+  })
 
   // Real-time updates handled by App-level SSE bridge which invalidates ["comments", taskId]
 
@@ -442,7 +439,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                                   addReplyMutation.mutate({ parentId: comment.id, content })
                                   setReplyOpenFor(null)
                                 }}
-                                disabled={addReplyMutation.isLoading || !(replyDrafts[comment.id] || "").trim()}
+                                disabled={addReplyMutation.isPending || !(replyDrafts[comment.id] || "").trim()}
                                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                               >
                                 <Send className="h-4 w-4 mr-2" />
@@ -491,7 +488,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                       addCommentMutation.mutate(content)
                     }}
                     className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                    disabled={!newComment.trim() || addCommentMutation.isLoading}
+                    disabled={!newComment.trim() || addCommentMutation.isPending}
                   >
                     <Send className="h-4 w-4 mr-2" />
                     Add Comment

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { useMutation, useQueryClient } from "react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -74,8 +74,8 @@ export function CreateTaskModal({
   const queryClient = useQueryClient();
 
   // Create task mutation for direct API approach
-  const createTaskMutation = useMutation(
-    async (taskData: any) => {
+  const createTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
       // Only used when boardId is provided
       if (boardId) {
         const payload = {
@@ -88,13 +88,12 @@ export function CreateTaskModal({
       }
       throw new Error('boardId is required for direct API calls');
     },
-    {
-      onSuccess: (data) => {
+    onSuccess: (data) => {
         if (boardId) {
           // Invalidate relevant queries
-          queryClient.invalidateQueries(["board", boardId]);
-          queryClient.invalidateQueries(["tasks", boardId]);
-          queryClient.invalidateQueries("boards");
+          queryClient.invalidateQueries({ queryKey: ["board", boardId] });
+          queryClient.invalidateQueries({ queryKey: ["tasks", boardId] });
+          queryClient.invalidateQueries({ queryKey: ["boards"] });
         }
         
         // Reset form and close modal
@@ -112,7 +111,7 @@ export function CreateTaskModal({
           description: "Your task has been created and is ready to go!",
         });
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         logger.error("Task creation error:", error);
         toast({
           title: "Oops! Something went wrong",
@@ -120,8 +119,7 @@ export function CreateTaskModal({
           variant: "destructive",
         });
       },
-    },
-  );
+  });
 
   const resetForm = () => {
     setFormData({
@@ -320,10 +318,10 @@ export function CreateTaskModal({
             </Button>
             <Button
               type="submit"
-              disabled={createTaskMutation.isLoading}
+              disabled={createTaskMutation.isPending}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
             >
-              {createTaskMutation.isLoading ? (
+              {createTaskMutation.isPending ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Creating Magic...

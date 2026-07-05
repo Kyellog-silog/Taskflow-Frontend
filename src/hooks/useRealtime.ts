@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { useQueryClient } from "react-query"
+import { useQueryClient } from "@tanstack/react-query"
   import logger from "../lib/logger"
 
 interface UseRealtimeOptions {

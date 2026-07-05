@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Header } from "../components/Header"
 import { Card, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button"
@@ -47,22 +47,21 @@ const TeamsPage = () => {
   const [newTeam, setNewTeam] = useState({ name: "", description: "" })
 
   // Fetch teams
-  const { data: teams, isLoading } = useQuery(
-    "teams",
-    teamsAPI.getTeams,
-    {
-      // Make team membership changes propagate faster across tabs/sessions
-      staleTime: 10 * 1000, // 10s
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-      refetchInterval: 30 * 1000, // poll every 30s to catch remote updates
-    }
-  )
+  const { data: teams, isLoading } = useQuery({
+    queryKey: ["teams"],
+    queryFn: teamsAPI.getTeams,
+    // Make team membership changes propagate faster across tabs/sessions
+    staleTime: 10 * 1000, // 10s
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 30 * 1000, // poll every 30s to catch remote updates
+  })
 
   // Create team mutation
-  const createTeamMutation = useMutation(teamsAPI.createTeam, {
+  const createTeamMutation = useMutation({
+    mutationFn: teamsAPI.createTeam,
     onSuccess: () => {
-      queryClient.invalidateQueries("teams")
+      queryClient.invalidateQueries({ queryKey: ["teams"] })
       setIsCreateModalOpen(false)
       setNewTeam({ name: "", description: "" })
       toast({
@@ -86,31 +85,27 @@ const TeamsPage = () => {
 
   const {
       data: allBoardsData,
-    } = useQuery(
-      ["boards", "active"],
-      async () => {
+    } = useQuery({
+      queryKey: ["boards", "active"],
+      queryFn: async () => {
         const response = await boardsAPI.getBoards("active")
         return response
       },
-      {
-        refetchOnWindowFocus: true,
-        refetchOnMount: true,
-        staleTime: 0,
-      },
-    )
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      staleTime: 0,
+    })
 
   // Invite member mutation
-  const inviteMemberMutation = useMutation(
-    ({ teamId, email }: { teamId: string; email: string }) => teamsAPI.inviteMember(teamId, email),
-    {
-      onSuccess: (_, variables) => {
+  const inviteMemberMutation = useMutation({
+    mutationFn: ({ teamId, email }: { teamId: string; email: string }) => teamsAPI.inviteMember(teamId, email),
+    onSuccess: (_, variables) => {
         toast({ title: "Invitation Sent!", description: `An invitation has been sent to ${variables.email}.` })
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({ title: "Error", description: error.response?.data?.message || "Failed to send invitation.", variant: "destructive" })
       },
-    }
-  )
+  })
 
   // Handle team invitation
   const handleInviteMember = (teamId: string) => {
@@ -252,10 +247,10 @@ const TeamsPage = () => {
                         </Button>
                         <Button
                           type="submit"
-                          disabled={createTeamMutation.isLoading}
+                          disabled={createTeamMutation.isPending}
                           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                         >
-                          {createTeamMutation.isLoading ? "Creating..." : "Create Team"}
+                          {createTeamMutation.isPending ? "Creating..." : "Create Team"}
                         </Button>
                       </div>
                     </form>

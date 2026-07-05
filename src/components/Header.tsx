@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 import { boardsAPI, teamsAPI, notificationsAPI } from "../services/api"
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Logo } from "./Logo"
 
 const appNav = [
@@ -47,9 +47,10 @@ export const Header: React.FC = () => {
   const boardId = location.pathname.startsWith("/boards/") ? location.pathname.split("/")[2] : undefined
   const { createTask } = useTasks(boardId)
 
-  const createBoardMutation = useMutation(boardsAPI.createBoard, {
+  const createBoardMutation = useMutation({
+    mutationFn: boardsAPI.createBoard,
     onSuccess: (data) => {
-      queryClient.invalidateQueries("boards")
+      queryClient.invalidateQueries({ queryKey: ["boards"] })
       setIsCreateBoardModalOpen(false)
       setNewBoard({ name: "", description: "" })
       toast({ title: "Board created", description: "Your new board is ready." })
@@ -76,24 +77,27 @@ export const Header: React.FC = () => {
     staleTime: 30 * 1000,
   })
 
-  const markAllReadMutation = useMutation(notificationsAPI.markAllRead, {
+  const markAllReadMutation = useMutation({
+    mutationFn: notificationsAPI.markAllRead,
     onSuccess: () => {
-      queryClient.invalidateQueries(["notifications", "unread-count"])
-      queryClient.invalidateQueries(["notifications", "list"])
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
     },
   })
 
-  const markReadMutation = useMutation(notificationsAPI.markRead, {
+  const markReadMutation = useMutation({
+    mutationFn: notificationsAPI.markRead,
     onSuccess: () => {
-      queryClient.invalidateQueries(["notifications", "unread-count"])
-      queryClient.invalidateQueries(["notifications", "list"])
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
     },
   })
 
-  const deleteNotificationMutation = useMutation(notificationsAPI.deleteNotification, {
+  const deleteNotificationMutation = useMutation({
+    mutationFn: notificationsAPI.deleteNotification,
     onSuccess: () => {
-      queryClient.invalidateQueries(["notifications", "unread-count"])
-      queryClient.invalidateQueries(["notifications", "list"])
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] })
+      queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
     },
   })
 
@@ -218,9 +222,9 @@ export const Header: React.FC = () => {
                       <button
                         className="text-xs text-violet-400 hover:text-violet-300 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded disabled:opacity-40 disabled:cursor-not-allowed"
                         onClick={() => markAllReadMutation.mutate()}
-                        disabled={markAllReadMutation.isLoading}
+                        disabled={markAllReadMutation.isPending}
                       >
-                        {markAllReadMutation.isLoading ? "Marking…" : "Mark all read"}
+                        {markAllReadMutation.isPending ? "Marking…" : "Mark all read"}
                       </button>
                     )}
                   </div>
@@ -446,8 +450,8 @@ export const Header: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => setIsCreateBoardModalOpen(false)} className="border-white/10 text-slate-300 hover:bg-white/5">
                 Cancel
               </Button>
-              <Button type="submit" disabled={createBoardMutation.isLoading} className="bg-violet-600 hover:bg-violet-500 text-white">
-                {createBoardMutation.isLoading ? "Creating…" : "Create Board"}
+              <Button type="submit" disabled={createBoardMutation.isPending} className="bg-violet-600 hover:bg-violet-500 text-white">
+                {createBoardMutation.isPending ? "Creating…" : "Create Board"}
               </Button>
             </div>
           </form>

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { Header } from "../components/Header"
 import { CreateBoardModal } from "../components/CreateBoardModal"
@@ -33,34 +33,38 @@ const BoardsPage = () => {
   const [archiveBoard, setArchiveBoard] = useState<any>(null)
 
   /* ── queries ── */
-  const { data: activeBoardsData,  isLoading: activeBoardsLoading,  error: activeBoardsError,  refetch: refetchActiveBoards }  = useQuery(
-    ["boards", "active"],   () => boardsAPI.getBoards("active"),
-    { refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000 },
-  )
-  const { data: archivedBoardsData, isLoading: archivedBoardsLoading, error: archivedBoardsError, refetch: refetchArchivedBoards } = useQuery(
-    ["boards", "archived"], () => boardsAPI.getBoards("archived"),
-    { enabled: activeTab === "archived", refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000 },
-  )
-  const { data: deletedBoardsData,  isLoading: deletedBoardsLoading,  error: deletedBoardsError,  refetch: refetchDeletedBoards }  = useQuery(
-    ["boards", "deleted"],  () => boardsAPI.getBoards("deleted"),
-    { enabled: activeTab === "deleted", refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000 },
-  )
+  const { data: activeBoardsData,  isLoading: activeBoardsLoading,  error: activeBoardsError,  refetch: refetchActiveBoards }  = useQuery({
+    queryKey: ["boards", "active"],   queryFn: () => boardsAPI.getBoards("active"),
+    refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
+  })
+  const { data: archivedBoardsData, isLoading: archivedBoardsLoading, error: archivedBoardsError, refetch: refetchArchivedBoards } = useQuery({
+    queryKey: ["boards", "archived"], queryFn: () => boardsAPI.getBoards("archived"),
+    enabled: activeTab === "archived", refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
+  })
+  const { data: deletedBoardsData,  isLoading: deletedBoardsLoading,  error: deletedBoardsError,  refetch: refetchDeletedBoards }  = useQuery({
+    queryKey: ["boards", "deleted"],  queryFn: () => boardsAPI.getBoards("deleted"),
+    enabled: activeTab === "deleted", refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
+  })
 
   /* ── mutations ── */
-  const deleteBoardMutation = useMutation((id: string) => boardsAPI.deleteBoard(id), {
-    onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board deleted" }); setDeleteBoard(null) },
+  const deleteBoardMutation = useMutation({
+    mutationFn: (id: string) => boardsAPI.deleteBoard(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board deleted" }); setDeleteBoard(null) },
     onError:   (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to delete board", variant: "destructive" }),
   })
-  const archiveBoardMutation = useMutation((id: string) => boardsAPI.archiveBoard(id), {
-    onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board archived" }); setArchiveBoard(null) },
+  const archiveBoardMutation = useMutation({
+    mutationFn: (id: string) => boardsAPI.archiveBoard(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board archived" }); setArchiveBoard(null) },
     onError:   (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to archive board", variant: "destructive" }),
   })
-  const unarchiveBoardMutation = useMutation((id: string) => boardsAPI.unarchiveBoard(id), {
-    onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board unarchived" }) },
+  const unarchiveBoardMutation = useMutation({
+    mutationFn: (id: string) => boardsAPI.unarchiveBoard(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board unarchived" }) },
     onError:   (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to unarchive board", variant: "destructive" }),
   })
-  const restoreBoardMutation = useMutation((id: string) => boardsAPI.restoreBoard(id), {
-    onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board restored" }); setRestoreBoard(null) },
+  const restoreBoardMutation = useMutation({
+    mutationFn: (id: string) => boardsAPI.restoreBoard(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board restored" }); setRestoreBoard(null) },
     onError:   (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to restore board", variant: "destructive" }),
   })
 
@@ -74,8 +78,8 @@ const BoardsPage = () => {
   const currentLoading = getCurrentLoading()
   const currentError   = getCurrentError()
 
-  const handleBoardCreated = () => { queryClient.invalidateQueries("boards"); toast({ title: "Board created!" }) }
-  const handleBoardUpdated = () => { queryClient.invalidateQueries("boards"); setEditBoard(null); toast({ title: "Board updated!" }) }
+  const handleBoardCreated = () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board created!" }) }
+  const handleBoardUpdated = () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); setEditBoard(null); toast({ title: "Board updated!" }) }
 
   /* ── Board card ── */
   const BoardCard = ({ board, type }: { board: any; type: "active" | "archived" | "deleted" }) => (
@@ -299,10 +303,10 @@ const BoardsPage = () => {
       </main>
 
       {/* Modals */}
-      {deleteBoard  && <DeleteBoardModal  board={deleteBoard}  isOpen={!!deleteBoard}  onClose={() => setDeleteBoard(null)}  onConfirm={() => deleteBoardMutation.mutate(deleteBoard.id)}   isLoading={deleteBoardMutation.isLoading} />}
+      {deleteBoard  && <DeleteBoardModal  board={deleteBoard}  isOpen={!!deleteBoard}  onClose={() => setDeleteBoard(null)}  onConfirm={() => deleteBoardMutation.mutate(deleteBoard.id)}   isLoading={deleteBoardMutation.isPending} />}
       {editBoard    && <EditBoardModal    board={editBoard}    isOpen={!!editBoard}    onClose={() => setEditBoard(null)}    onBoardUpdated={handleBoardUpdated} />}
-      {restoreBoard && <RestoreBoardModal board={restoreBoard} isOpen={!!restoreBoard} onClose={() => setRestoreBoard(null)} onConfirm={() => restoreBoardMutation.mutate(restoreBoard.id)} isLoading={restoreBoardMutation.isLoading} />}
-      {archiveBoard && <ArchiveBoardModal board={archiveBoard} isOpen={!!archiveBoard} onClose={() => setArchiveBoard(null)} onConfirm={() => archiveBoardMutation.mutate(archiveBoard.id)} isLoading={archiveBoardMutation.isLoading} />}
+      {restoreBoard && <RestoreBoardModal board={restoreBoard} isOpen={!!restoreBoard} onClose={() => setRestoreBoard(null)} onConfirm={() => restoreBoardMutation.mutate(restoreBoard.id)} isLoading={restoreBoardMutation.isPending} />}
+      {archiveBoard && <ArchiveBoardModal board={archiveBoard} isOpen={!!archiveBoard} onClose={() => setArchiveBoard(null)} onConfirm={() => archiveBoardMutation.mutate(archiveBoard.id)} isLoading={archiveBoardMutation.isPending} />}
     </div>
   )
 }

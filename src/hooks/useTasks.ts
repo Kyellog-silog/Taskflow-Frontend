@@ -1,29 +1,34 @@
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { tasksAPI } from "../services/api"
 
 
 export const useTasks = (boardId?: string) => {
   const queryClient = useQueryClient()
 
-  const tasksQuery = useQuery(["tasks", boardId], () => tasksAPI.getTasks(boardId), {
+  const tasksQuery = useQuery({
+    queryKey: ["tasks", boardId],
+    queryFn: () => tasksAPI.getTasks(boardId),
     enabled: !!boardId,
   })
 
-  const createTaskMutation = useMutation(tasksAPI.createTask, {
+  const createTaskMutation = useMutation({
+    mutationFn: tasksAPI.createTask,
     onSuccess: () => {
-      queryClient.invalidateQueries(["tasks", boardId])
+      queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
     },
   })
 
-  const updateTaskMutation = useMutation(({ id, data }: { id: string; data: any }) => tasksAPI.updateTask(id, data), {
+  const updateTaskMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => tasksAPI.updateTask(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(["tasks", boardId])
+      queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
     },
   })
 
-  const deleteTaskMutation = useMutation(tasksAPI.deleteTask, {
+  const deleteTaskMutation = useMutation({
+    mutationFn: tasksAPI.deleteTask,
     onSuccess: () => {
-      queryClient.invalidateQueries(["tasks", boardId])
+      queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
     },
   })
 
@@ -34,8 +39,8 @@ export const useTasks = (boardId?: string) => {
     createTask: createTaskMutation.mutate,
     updateTask: updateTaskMutation.mutate,
     deleteTask: deleteTaskMutation.mutate,
-    isCreating: createTaskMutation.isLoading,
-    isUpdating: updateTaskMutation.isLoading,
-    isDeleting: deleteTaskMutation.isLoading,
+    isCreating: createTaskMutation.isPending,
+    isUpdating: updateTaskMutation.isPending,
+    isDeleting: deleteTaskMutation.isPending,
   }
 }

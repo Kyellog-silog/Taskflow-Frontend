@@ -1,5 +1,5 @@
 "use client"
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { Header } from "../components/Header"
@@ -49,32 +49,31 @@ const DashboardPage = () => {
   const [editBoard, setEditBoard]     = useState<any>(null)
 
   /* ── queries ── */
-  const { data: recentBoardsData, isLoading: recentBoardsLoading, error: recentBoardsError, refetch: refetchRecentBoards } = useQuery(
-    ["boards", "recent"],
-    () => boardsAPI.getBoards("recent", 5),
-    { refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
-      onError: (e: any) => { logger.error("Failed to fetch recent boards:", e); toast({ title: "Error", description: "Failed to load recent boards", variant: "destructive" }) } },
-  )
-  const { data: allBoardsData } = useQuery(
-    ["boards", "active"],
-    () => boardsAPI.getBoards("active"),
-    { refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000 },
-  )
-  const { data: dueTodayData, isLoading: dueTodayLoading } = useQuery(
-    ["tasks", "due-today", { uncompleted: true }],
-    () => tasksAPI.getDueTodayCount(),
-    { staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false },
-  )
-  const { data: dueSoonData, isLoading: dueSoonLoading } = useQuery(
-    ["tasks", "due-soon", { days: 3, uncompleted: true }],
-    () => tasksAPI.getDueSoonCount(3),
-    { staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false },
-  )
-  const { data: activityResp } = useQuery(
-    ["profile", "activity", { limit: 5 }],
-    () => profileAPI.getActivity(5),
-    { staleTime: 30_000, refetchOnMount: true, refetchOnWindowFocus: false },
-  )
+  const { data: recentBoardsData, isLoading: recentBoardsLoading, error: recentBoardsError, refetch: refetchRecentBoards } = useQuery({
+    queryKey: ["boards", "recent"],
+    queryFn: () => boardsAPI.getBoards("recent", 5),
+    refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
+  })
+  const { data: allBoardsData } = useQuery({
+    queryKey: ["boards", "active"],
+    queryFn: () => boardsAPI.getBoards("active"),
+    refetchOnWindowFocus: false, refetchOnMount: false, staleTime: 5 * 60 * 1000,
+  })
+  const { data: dueTodayData, isLoading: dueTodayLoading } = useQuery({
+    queryKey: ["tasks", "due-today", { uncompleted: true }],
+    queryFn: () => tasksAPI.getDueTodayCount(),
+    staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false,
+  })
+  const { data: dueSoonData, isLoading: dueSoonLoading } = useQuery({
+    queryKey: ["tasks", "due-soon", { days: 3, uncompleted: true }],
+    queryFn: () => tasksAPI.getDueSoonCount(3),
+    staleTime: 60 * 1000, refetchOnWindowFocus: false, refetchOnMount: false,
+  })
+  const { data: activityResp } = useQuery({
+    queryKey: ["profile", "activity", { limit: 5 }],
+    queryFn: () => profileAPI.getActivity(5),
+    staleTime: 30_000, refetchOnMount: true, refetchOnWindowFocus: false,
+  })
 
   /* ── derived ── */
   const recentBoards = recentBoardsData?.data || []
@@ -108,29 +107,29 @@ const DashboardPage = () => {
   }
 
   /* ── mutations ── */
-  const deleteBoardMutation = useMutation(
-    (id: string) => boardsAPI.deleteBoard(id),
-    { onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board deleted" }); setDeleteBoard(null) },
-      onError: (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to delete board", variant: "destructive" }) },
-  )
-  const archiveBoardMutation = useMutation(
-    (id: string) => boardsAPI.archiveBoard(id),
-    { onSuccess: () => { queryClient.invalidateQueries("boards"); toast({ title: "Board archived" }) },
-      onError: (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to archive board", variant: "destructive" }) },
-  )
+  const deleteBoardMutation = useMutation({
+    mutationFn: (id: string) => boardsAPI.deleteBoard(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board deleted" }); setDeleteBoard(null) },
+    onError: (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to delete board", variant: "destructive" }),
+  })
+  const archiveBoardMutation = useMutation({
+    mutationFn: (id: string) => boardsAPI.archiveBoard(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["boards"] }); toast({ title: "Board archived" }) },
+    onError: (e: any) => toast({ title: "Error", description: e.response?.data?.message || "Failed to archive board", variant: "destructive" }),
+  })
 
   const handleBoardCreated = (nb: any) => {
     logger.log("Board created:", nb)
     refetchRecentBoards()
-    queryClient.invalidateQueries(["boards", "active"])
-    queryClient.invalidateQueries(["profile", "activity"])
+    queryClient.invalidateQueries({ queryKey: ["boards", "active"] })
+    queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
     toast({ title: "Board created!" })
   }
   const handleBoardUpdated = (ub: any) => {
     logger.log("Board updated:", ub)
     refetchRecentBoards()
-    queryClient.invalidateQueries(["boards", "active"])
-    queryClient.invalidateQueries(["profile", "activity"])
+    queryClient.invalidateQueries({ queryKey: ["boards", "active"] })
+    queryClient.invalidateQueries({ queryKey: ["profile", "activity"] })
     setEditBoard(null)
     toast({ title: "Board updated!" })
   }
@@ -418,7 +417,7 @@ const DashboardPage = () => {
           isOpen={!!deleteBoard}
           onClose={() => setDeleteBoard(null)}
           onConfirm={() => deleteBoardMutation.mutate(deleteBoard.id)}
-          isLoading={deleteBoardMutation.isLoading}
+          isLoading={deleteBoardMutation.isPending}
         />
       )}
       {editBoard && (

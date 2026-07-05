@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
-import { useQuery, useMutation, useQueryClient } from "react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Header } from "../components/Header"
 import { KanbanBoard } from "../components/KanbanBoard"
 import { LoadingSpinner } from "../components/LoadingSpinner"
@@ -160,62 +160,39 @@ const BoardPage: React.FC = () => {
 
 
   // Fetch board data (includes server-calculated permissions)
-  const { data: board, isLoading: boardLoading } = useQuery(
-    ["board", boardId],
-    async () => {
+  const { data: board, isLoading: boardLoading } = useQuery({
+    queryKey: ["board", boardId],
+    queryFn: async () => {
       const response = await boardsAPI.getBoard(boardId!)
       return response
     },
-    {
-      enabled: !!boardId,
-      staleTime: 60 * 1000,
-      onError: () => {
-        toast({
-          title: "Error",
-          description: "Failed to load board data",
-          variant: "destructive",
-        })
-      },
-    },
-  )
+    enabled: !!boardId,
+    staleTime: 60 * 1000,
+  })
 
   // Fetch user's teams for team management
-  const { data: userTeams } = useQuery(
-    ["user-teams", user?.id],
-    async () => {
+  const { data: userTeams } = useQuery({
+    queryKey: ["user-teams", user?.id],
+    queryFn: async () => {
       const response = await teamsAPI.getTeams()
       return response
     },
-    {
-      enabled: !!user?.id,
-      staleTime: 60 * 1000,
-      refetchInterval: false,
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to load teams",
-          variant: "destructive",
-        })
-      },
-    },
-  )
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+    refetchInterval: false,
+  })
 
   // Fetch board teams (teams already added to this board)
-  const { data: boardTeams } = useQuery(
-    ["board-teams", boardId],
-    async () => {
+  const { data: boardTeams } = useQuery({
+    queryKey: ["board-teams", boardId],
+    queryFn: async () => {
       const response = await boardsAPI.getBoardTeams(boardId!)
       return response
     },
-    {
-      enabled: !!boardId,
-      staleTime: 60 * 1000,
-      refetchInterval: false,
-      onError: (error: any) => {
-  logger.log("No teams found for this board or error loading board teams")
-      },
-    },
-  )
+    enabled: !!boardId,
+    staleTime: 60 * 1000,
+    refetchInterval: false,
+  })
 
   const getColumnByTitle = (title: string) => {
     // First try exact match
@@ -235,24 +212,15 @@ const BoardPage: React.FC = () => {
   }
 
   // Fetch tasks
-  const { data: tasksData, isLoading: tasksLoading } = useQuery(
-    ["tasks", boardId],
-    async () => {
+  const { data: tasksData, isLoading: tasksLoading } = useQuery({
+    queryKey: ["tasks", boardId],
+    queryFn: async () => {
       const response = await tasksAPI.getTasks(boardId, { limit: 300 })
       return response
     },
-    {
-      enabled: !!boardId,
-      staleTime: 30_000,
-      onError: (error: any) => {
-        toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to load tasks",
-          variant: "destructive",
-        })
-      },
-    },
-  )
+    enabled: !!boardId,
+    staleTime: 30_000,
+  })
 
   // Calculate permissions: prefer server-calculated from board.show
   const currentBoardTeams = boardTeams?.data || []
@@ -286,76 +254,70 @@ const BoardPage: React.FC = () => {
   })
 
   // Update task mutation
-  const updateTaskMutation = useMutation(
-    async ({ taskId, taskData }: { taskId: string; taskData: any }) => {
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ taskId, taskData }: { taskId: string; taskData: any }) => {
       return await tasksAPI.updateTask(taskId, taskData)
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["tasks", boardId])
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
         toast({
           title: "Success",
           description: "Task updated successfully! 🎉",
         })
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to update task",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Create task mutation
-  const createTaskMutation = useMutation(
-    async (taskData: any) => {
+  const createTaskMutation = useMutation({
+    mutationFn: async (taskData: any) => {
       return await tasksAPI.createTask({
         ...taskData,
         board_id: boardId,
       })
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["tasks", boardId])
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
         toast({
           title: "Success",
           description: "Task created successfully! 🚀",
         })
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to create task",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Delete task mutation - MOVED TO TOP LEVEL
-  const deleteTaskMutation = useMutation(
-    async (id: string) => {
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
       return await tasksAPI.deleteTask(id)
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["tasks", boardId])
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
         toast({
           title: "Success",
           description: "Task deleted successfully! 🗑️",
         })
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to delete task",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Simplified handler that uses the mutation defined above
   const handleTaskDelete = (taskId: string) => {
@@ -646,18 +608,18 @@ const BoardPage: React.FC = () => {
             logger.log("Invalidating team queries after update...")
 
             // Invalidate all team-related queries
-            queryClient.invalidateQueries(["board-teams", boardId])
-            queryClient.invalidateQueries(["user-teams", user?.id])
-            queryClient.invalidateQueries("teams")
+            queryClient.invalidateQueries({ queryKey: ["board-teams", boardId] })
+            queryClient.invalidateQueries({ queryKey: ["user-teams", user?.id] })
+            queryClient.invalidateQueries({ queryKey: ["teams"] })
 
             // Force immediate refetch
-            queryClient.refetchQueries(["board-teams", boardId])
-            queryClient.refetchQueries(["user-teams", user?.id])
+            queryClient.refetchQueries({ queryKey: ["board-teams", boardId] })
+            queryClient.refetchQueries({ queryKey: ["user-teams", user?.id] })
 
             // Additional delay refetch to ensure consistency
             setTimeout(() => {
-              queryClient.invalidateQueries(["board-teams", boardId])
-              queryClient.refetchQueries(["board-teams", boardId])
+              queryClient.invalidateQueries({ queryKey: ["board-teams", boardId] })
+              queryClient.refetchQueries({ queryKey: ["board-teams", boardId] })
             }, 1000)
           }}
         />

@@ -9,7 +9,7 @@ import { Badge } from "./ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
-import { useMutation, useQueryClient } from "react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useToast } from "../hooks/use-toast"
 import { teamsAPI } from "../services/api"
 import { useAuth } from "../contexts/AuthContext"
@@ -94,7 +94,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
         ...prev,
         members: prev.members.filter((m) => m.id !== variables.userId),
       }))
-      queryClient.invalidateQueries(["teams"])
+      queryClient.invalidateQueries({ queryKey: ["teams"] })
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to remove member.", variant: "destructive" })
@@ -106,7 +106,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
     mutationFn: (teamId: string) => teamsAPI.deleteTeam(teamId),
     onSuccess: () => {
       toast({ title: "Team Deleted", description: "The team has been permanently deleted." })
-      queryClient.invalidateQueries(["teams"])
+      queryClient.invalidateQueries({ queryKey: ["teams"] })
       onClose()
     },
     onError: () => {
@@ -120,7 +120,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
       teamsAPI.updateTeam(teamId, data),
     onSuccess: () => {
       toast({ title: "Team Updated", description: "Team settings saved successfully." })
-      queryClient.invalidateQueries(["teams"])
+      queryClient.invalidateQueries({ queryKey: ["teams"] })
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update team.", variant: "destructive" })
@@ -138,12 +138,12 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
       })
 
   // Aggressive cache invalidation (react-query v3 signatures)
-  queryClient.invalidateQueries(["teams"]) 
-  queryClient.invalidateQueries(["user-teams"]) 
-  queryClient.invalidateQueries(["board-teams"]) 
+  queryClient.invalidateQueries({ queryKey: ["teams"] }) 
+  queryClient.invalidateQueries({ queryKey: ["user-teams"] }) 
+  queryClient.invalidateQueries({ queryKey: ["board-teams"] }) 
 
   // Force refetch
-  queryClient.refetchQueries(["teams"]) 
+  queryClient.refetchQueries({ queryKey: ["teams"] }) 
 
       // Update the local state immediately
       setEditedTeam((prev) => ({
@@ -394,12 +394,12 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                     />
                     <Button
                       onClick={handleInviteMember}
-                      disabled={!canManage || !newMemberEmail.trim() || inviteMemberMutation.isLoading}
+                      disabled={!canManage || !newMemberEmail.trim() || inviteMemberMutation.isPending}
                       className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-60"
                       title={!canManage ? "Only admins or the owner can invite members" : undefined}
                     >
                       <Send className="h-4 w-4 mr-2" />
-                      {inviteMemberMutation.isLoading ? "Sending..." : "Send Invite"}
+                      {inviteMemberMutation.isPending ? "Sending..." : "Send Invite"}
                     </Button>
                   </div>
                 </div>
@@ -435,7 +435,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                         <Select
                           value={member.role}
                           onValueChange={(newRole) => handleUpdateMemberRole(team.id, member.id, newRole)}
-                          disabled={updateMemberRoleMutation.isLoading || !canManage || member.id === editedTeam.owner.id}
+                          disabled={updateMemberRoleMutation.isPending || !canManage || member.id === editedTeam.owner.id}
                         >
                           <SelectTrigger className="w-32">
                             <SelectValue />
@@ -450,7 +450,7 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:bg-red-50"
-                          disabled={!canManage || member.id === editedTeam.owner.id || removeMemberMutation.isLoading}
+                          disabled={!canManage || member.id === editedTeam.owner.id || removeMemberMutation.isPending}
                           title={!canManage ? "Only admins or the owner can remove members" : member.id === editedTeam.owner.id ? "Owner cannot be removed" : "Remove member"}
                           onClick={() => removeMemberMutation.mutate({ teamId: team.id, userId: member.id })}
                         >
@@ -530,10 +530,10 @@ export function TeamModal({ team, isOpen, onClose, onUpdate }: TeamModalProps) {
                           <Button
                             variant="destructive"
                             size="sm"
-                            disabled={deleteTeamMutation.isLoading}
+                            disabled={deleteTeamMutation.isPending}
                             onClick={() => deleteTeamMutation.mutate(team.id)}
                           >
-                            {deleteTeamMutation.isLoading ? "Deleting..." : "Yes, Delete"}
+                            {deleteTeamMutation.isPending ? "Deleting..." : "Yes, Delete"}
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => setConfirmDelete(false)}>
                             Cancel

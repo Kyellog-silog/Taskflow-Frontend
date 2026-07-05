@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useMutation, useQueryClient } from "react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   Users,
   Plus,
@@ -106,12 +106,11 @@ export function TeamSidebar({
   }
 
   // Add team to board mutation
-  const addTeamToBoardMutation = useMutation(
-    async (teamId: string) => {
+  const addTeamToBoardMutation = useMutation({
+    mutationFn: async (teamId: string) => {
       return await boardsAPI.addTeamToBoard(boardId, teamId)
     },
-    {
-      onSuccess: () => {
+    onSuccess: () => {
         toast({
           title: "Success",
           description: "Team added to board successfully! 🎉",
@@ -119,46 +118,42 @@ export function TeamSidebar({
         onTeamUpdate()
         setIsAddTeamModalOpen(false)
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to add team to board",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Remove team from board mutation
-  const removeTeamFromBoardMutation = useMutation(
-    async (teamId: string) => {
+  const removeTeamFromBoardMutation = useMutation({
+    mutationFn: async (teamId: string) => {
       return await boardsAPI.removeTeamFromBoard(boardId, teamId)
     },
-    {
-      onSuccess: () => {
+    onSuccess: () => {
         toast({
           title: "Success",
           description: "Team removed from board successfully",
         })
         onTeamUpdate()
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to remove team from board",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Invite member to team mutation
-  const inviteMemberMutation = useMutation(
-    async ({ teamId, email, role }: { teamId: string; email: string; role: string }) => {
+  const inviteMemberMutation = useMutation({
+    mutationFn: async ({ teamId, email, role }: { teamId: string; email: string; role: string }) => {
       return await teamsAPI.inviteMember(teamId, email, role)
     },
-    {
-      onSuccess: () => {
+    onSuccess: () => {
         toast({
           title: "Success",
           description: "Invitation sent successfully! 📧",
@@ -167,46 +162,42 @@ export function TeamSidebar({
         setNewMemberRole("member")
         onTeamUpdate()
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to send invitation",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Remove member from team mutation
-  const removeMemberMutation = useMutation(
-    async ({ teamId, userId }: { teamId: string; userId: string }) => {
+  const removeMemberMutation = useMutation({
+    mutationFn: async ({ teamId, userId }: { teamId: string; userId: string }) => {
       return await teamsAPI.removeMember(teamId, userId)
     },
-    {
-      onSuccess: () => {
+    onSuccess: () => {
         toast({
           title: "Success",
           description: "Member removed successfully",
         })
         onTeamUpdate()
       },
-      onError: (error: any) => {
+    onError: (error: any) => {
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to remove member",
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   // Update member role mutation
-  const updateMemberRoleMutation = useMutation(
-    async ({ teamId, userId, role }: { teamId: string; userId: string; role: string }) => {
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: async ({ teamId, userId, role }: { teamId: string; userId: string; role: string }) => {
       return await teamsAPI.updateMemberRole(teamId, userId, role)
     },
-    {
-      onSuccess: (_data, variables) => {
+    onSuccess: (_data, variables) => {
         // Immediately update selectedTeam if it's the team being modified
         if (selectedTeam && selectedTeam.id === variables.teamId) {
           const updatedSelectedTeam = {
@@ -242,8 +233,7 @@ export function TeamSidebar({
           variant: "destructive",
         })
       },
-    },
-  )
+  })
 
   const handleAddTeamToBoard = (teamId: string) => {
     addTeamToBoardMutation.mutate(teamId)
@@ -427,7 +417,7 @@ export function TeamSidebar({
                                   <Button
                                     size="sm"
                                     onClick={() => handleAddTeamToBoard(team.id)}
-                                    disabled={addTeamToBoardMutation.isLoading}
+                                    disabled={addTeamToBoardMutation.isPending}
                                     className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-xs"
                                   >
                                     Add
@@ -683,12 +673,12 @@ export function TeamSidebar({
                         </Select>
                         <Button
                           onClick={() => handleInviteMember(selectedTeam.id)}
-                          disabled={inviteMemberMutation.isLoading}
+                          disabled={inviteMemberMutation.isPending}
                           size="sm"
                           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         >
                           <Send className="h-3 w-3 mr-1" />
-                          {inviteMemberMutation.isLoading ? "..." : "Invite"}
+                          {inviteMemberMutation.isPending ? "..." : "Invite"}
                         </Button>
                       </div>
                       
@@ -765,7 +755,7 @@ export function TeamSidebar({
                               <Select
                                 value={member.role}
                                 onValueChange={(newRole) => handleUpdateMemberRole(selectedTeam.id, member.id, newRole)}
-                                disabled={updateMemberRoleMutation.isLoading}
+                                disabled={updateMemberRoleMutation.isPending}
                               >
                                 <SelectTrigger className="w-24 text-xs">
                                   <SelectValue />
@@ -780,7 +770,7 @@ export function TeamSidebar({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleRemoveMember(selectedTeam.id, member.id)}
-                                disabled={removeMemberMutation.isLoading}
+                                disabled={removeMemberMutation.isPending}
                                 className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
                               >
                                 <UserMinus className="h-3 w-3" />

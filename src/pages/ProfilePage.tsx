@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useQuery, useMutation } from "react-query"
+import { useQuery, useMutation } from "@tanstack/react-query"
 import { API_BASE_URL, authAPI } from "../services/api"
 import { Header } from "../components/Header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
@@ -57,10 +57,9 @@ const ProfilePage = () => {
     }
   }
 
-  const changePasswordMutation = useMutation(
-    () => authAPI.changePassword(passwordData.current_password, passwordData.password, passwordData.password_confirmation),
-    {
-      onSuccess: () => {
+  const changePasswordMutation = useMutation({
+    mutationFn: () => authAPI.changePassword(passwordData.current_password, passwordData.password, passwordData.password_confirmation),
+    onSuccess: () => {
         setPasswordData({ current_password: "", password: "", password_confirmation: "" })
         setShowPasswordForm(false)
         toast({ title: "Password Changed", description: "Your password has been updated successfully." })
@@ -72,8 +71,7 @@ const ProfilePage = () => {
           variant: "destructive",
         })
       },
-    }
-  )
+  })
 
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault()
@@ -333,10 +331,10 @@ const ProfilePage = () => {
                         <div className="flex space-x-3">
                           <Button
                             type="submit"
-                            disabled={changePasswordMutation.isLoading}
+                            disabled={changePasswordMutation.isPending}
                             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                           >
-                            {changePasswordMutation.isLoading ? "Saving..." : "Save Password"}
+                            {changePasswordMutation.isPending ? "Saving..." : "Save Password"}
                           </Button>
                           <Button
                             type="button"
