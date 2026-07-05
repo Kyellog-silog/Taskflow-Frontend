@@ -3,7 +3,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
-import { LayoutDashboard, Kanban, Users, User, Settings, LogOut, ChevronLeft, ChevronRight } from "lucide-react"
+import { LayoutDashboard, Kanban, FolderKanban, Users, User, Settings, LogOut, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { Logo } from "./Logo"
@@ -11,6 +11,7 @@ import * as React from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Projects",  href: "/projects",  icon: FolderKanban },
   { name: "Boards",    href: "/boards",    icon: Kanban },
   { name: "Teams",     href: "/teams",     icon: Users },
   { name: "Profile",   href: "/profile",   icon: User },

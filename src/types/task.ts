@@ -1,3 +1,5 @@
+import type { IssueType, Label } from "./project"
+
 export interface Task {
     id: string
     title: string
@@ -20,10 +22,18 @@ export interface Task {
     activities?: Activity[]
     isLocked?: boolean
     canMoveTo?: string[]
+    // Jira-style fields (Phase 1) — server-assigned, immutable: issueKey, projectId
+    issueKey?: string
+    issueType?: IssueType
+    storyPoints?: number | null
+    parentId?: string | null
+    epicId?: string | null
+    projectId?: string | null
+    labels?: Label[]
   }
-  
+
   export type TaskStatus = "todo" | "in-progress" | "review" | "done"
-  export type TaskPriority = "low" | "medium" | "high"
+  export type TaskPriority = "highest" | "high" | "medium" | "low" | "lowest"
   
   export interface Comment {
     id: string
@@ -68,14 +78,24 @@ export interface Task {
     assigneeId?: string
     priority?: TaskPriority
     dueDate?: string
+    issueType?: IssueType
+    storyPoints?: number | null
+    parentId?: string
+    epicId?: string
+    labels?: number[]
   }
-  
+
   export interface UpdateTaskRequest {
     title?: string
     description?: string
     assigneeId?: string
     priority?: TaskPriority
     dueDate?: string
+    issueType?: IssueType
+    storyPoints?: number | null
+    parentId?: string | null
+    epicId?: string | null
+    labels?: number[]
   }
   
   export interface MoveTaskRequest {

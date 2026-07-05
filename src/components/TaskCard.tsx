@@ -13,7 +13,7 @@ interface Task {
   title: string
   description: string
   status: string
-  priority: "low" | "medium" | "high"
+  priority: "highest" | "high" | "medium" | "low" | "lowest"
   assignee?: {
     id: string
     name: string
@@ -23,6 +23,18 @@ interface Task {
   comments: any[]
   createdAt: string
   canMoveTo?: string[]
+  issueKey?: string
+  issueType?: "epic" | "story" | "task" | "bug" | "subtask"
+  storyPoints?: number | null
+  labels?: { id: number; name: string; color: string }[]
+}
+
+const ISSUE_TYPE_ICONS: Record<string, string> = {
+  epic: "🟣",
+  story: "📗",
+  task: "🔷",
+  bug: "🐞",
+  subtask: "↳",
 }
 
 interface TaskCardProps {
@@ -38,6 +50,12 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
   ({ task, isDragging = false, onEdit, onDelete, showConstraints = false, constraintReason, ...props }, ref) => {
     const getPriorityConfig = (priority: string) => {
       switch (priority) {
+        case "highest":
+          return {
+            badge: "bg-gradient-to-r from-red-600 to-rose-600 text-white",
+            icon: "🔺",
+            leftBorder: "border-l-red-600",
+          }
         case "high":
           return {
             badge: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
@@ -55,6 +73,12 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
             badge: "bg-gradient-to-r from-emerald-500 to-green-500 text-white",
             icon: "🌱",
             leftBorder: "border-l-emerald-500",
+          }
+        case "lowest":
+          return {
+            badge: "bg-gradient-to-r from-slate-500 to-slate-600 text-white",
+            icon: "🔽",
+            leftBorder: "border-l-slate-400",
           }
         default:
           return {
@@ -149,11 +173,39 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
             </div>
           )}
 
+          {/* Labels */}
+          {task.labels && task.labels.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              {task.labels.slice(0, 3).map((label) => (
+                <span
+                  key={label.id}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-white/5 text-slate-300 border border-white/10"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: label.color }} aria-hidden="true" />
+                  {label.name}
+                </span>
+              ))}
+              {task.labels.length > 3 && (
+                <span className="text-[10px] text-slate-500 font-medium">+{task.labels.length - 3}</span>
+              )}
+            </div>
+          )}
+
           {/* Priority badge + metadata */}
           <div className="flex items-center justify-between">
-            <Badge className={`${priorityConfig.badge} text-xs font-semibold px-2 py-0.5 border-0`}>
-              {task.priority.toUpperCase()}
-            </Badge>
+            <div className="flex items-center gap-1.5">
+              <Badge className={`${priorityConfig.badge} text-xs font-semibold px-2 py-0.5 border-0`}>
+                {task.priority.toUpperCase()}
+              </Badge>
+              {task.storyPoints != null && (
+                <span
+                  className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-white/10 text-[10px] font-bold text-slate-300"
+                  title={`${task.storyPoints} story points`}
+                >
+                  {task.storyPoints}
+                </span>
+              )}
+            </div>
 
             <div className="flex items-center space-x-3 text-xs text-slate-500">
               {task.dueDate && (
@@ -189,8 +241,11 @@ export const TaskCard = forwardRef<HTMLDivElement, TaskCardProps>(
               </span>
             </div>
 
-            {/* Task ID */}
-            <span className="text-xs text-slate-600 font-mono">#{task.id.slice(-4)}</span>
+            {/* Issue key (falls back to short id for legacy tasks) */}
+            <span className="flex items-center gap-1 text-xs text-slate-500 font-mono" title={task.issueType || "task"}>
+              {task.issueType && <span aria-hidden="true">{ISSUE_TYPE_ICONS[task.issueType] || "🔷"}</span>}
+              {task.issueKey || `#${task.id.slice(-4)}`}
+            </span>
           </div>
 
           {/* Movement restrictions indicator */}

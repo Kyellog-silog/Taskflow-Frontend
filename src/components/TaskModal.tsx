@@ -12,9 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Separator } from "./ui/separator"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { commentsAPI } from "../services/api"
+import { commentsAPI, projectsAPI } from "../services/api"
 // SSE handled globally in App-level bridge
 import logger from "../lib/logger"
+import { ISSUE_TYPES, ISSUE_PRIORITIES } from "../types/project"
+import type { IssueType, IssuePriority, Label as ProjectLabel } from "../types/project"
 
 interface Task {
   id: string
@@ -22,7 +24,7 @@ interface Task {
   description: string
   status: string
   columnId: string // Add this line
-  priority: "low" | "medium" | "high"
+  priority: IssuePriority
   assignee?: {
     id: string
     name: string
@@ -31,6 +33,11 @@ interface Task {
   dueDate?: string
   comments: Comment[]
   createdAt: string
+  issueKey?: string
+  issueType?: IssueType
+  storyPoints?: number | null
+  projectId?: string | null
+  labels?: ProjectLabel[]
 }
 
 interface Comment {
@@ -115,6 +122,13 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
 
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
+      case "highest":
+        return {
+          color: "bg-gradient-to-r from-red-600 to-rose-600 text-white",
+          bgColor: "from-red-50 to-rose-50",
+          borderColor: "border-red-300",
+          icon: "🔺"
+        }
       case "high":
         return {
           color: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
@@ -136,6 +150,13 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
           borderColor: "border-green-200",
           icon: "🌱"
         }
+      case "lowest":
+        return {
+          color: "bg-gradient-to-r from-slate-500 to-slate-600 text-white",
+          bgColor: "from-slate-50 to-gray-50",
+          borderColor: "border-slate-200",
+          icon: "🔽"
+        }
       default:
         return {
           color: "bg-gradient-to-r from-gray-500 to-slate-500 text-white",
@@ -154,6 +175,23 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
     queryFn: () => commentsAPI.getComments(task.id),
     enabled: !!task.id,
   })
+
+  // Labels available in this task's project
+  const { data: labelsData } = useQuery({
+    queryKey: ["projects", task.projectId, "labels"],
+    queryFn: () => projectsAPI.getLabels(task.projectId!),
+    enabled: !!task.projectId,
+    staleTime: 60 * 1000,
+  })
+  const availableLabels: ProjectLabel[] = labelsData?.data ?? []
+
+  const toggleLabel = (label: ProjectLabel) => {
+    setEditedTask((prev) => {
+      const current = prev.labels ?? []
+      const has = current.some((l) => l.id === label.id)
+      return { ...prev, labels: has ? current.filter((l) => l.id !== label.id) : [...current, label] }
+    })
+  }
 
   // Keep editedTask.comments in sync with fetched comments
   useEffect(() => {
@@ -201,7 +239,9 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                 <span>Task Details</span>
                 <div className="text-2xl">{priorityConfig.icon}</div>
               </DialogTitle>
-              <p className="text-gray-600 mt-2">Task ID: #{editedTask.id.slice(-8)}</p>
+              <p className="text-gray-600 mt-2 font-mono">
+                {editedTask.issueKey || `Task ID: #${editedTask.id.slice(-8)}`}
+              </p>
             </div>
           </div>
         </DialogHeader>
@@ -280,32 +320,68 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
               </label>
               <Select
                 value={editedTask.priority}
-                onValueChange={(value: "low" | "medium" | "high") => setEditedTask({ ...editedTask, priority: value })}
+                onValueChange={(value: IssuePriority) => setEditedTask({ ...editedTask, priority: value })}
               >
                 <SelectTrigger className="bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-900">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-2 border-gray-200">
-                  <SelectItem value="low" className="hover:bg-green-50 text-gray-900">
-                    <div className="flex items-center space-x-2">
-                      <span>🌱</span>
-                      <span>Low Priority</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="medium" className="hover:bg-yellow-50 text-gray-900">
-                    <div className="flex items-center space-x-2">
-                      <span>⚡</span>
-                      <span>Medium Priority</span>
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="high" className="hover:bg-red-50 text-gray-900">
-                    <div className="flex items-center space-x-2">
-                      <span>🔥</span>
-                      <span>High Priority</span>
-                    </div>
-                  </SelectItem>
+                  {ISSUE_PRIORITIES.map((p) => (
+                    <SelectItem key={p.value} value={p.value} className="hover:bg-gray-50 text-gray-900">
+                      <div className="flex items-center space-x-2">
+                        <span>{p.icon}</span>
+                        <span>{p.label} Priority</span>
+                      </div>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+                <Tag className="h-4 w-4 text-violet-500" />
+                <span>Issue Type</span>
+              </label>
+              <Select
+                value={editedTask.issueType || "task"}
+                onValueChange={(value: IssueType) => setEditedTask({ ...editedTask, issueType: value })}
+              >
+                <SelectTrigger className="bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-900">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-2 border-gray-200">
+                  {ISSUE_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value} className="hover:bg-gray-50 text-gray-900">
+                      <div className="flex items-center space-x-2">
+                        <span>{t.icon}</span>
+                        <span>{t.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span>Story Points</span>
+              </label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                value={editedTask.storyPoints ?? ""}
+                onChange={(e) =>
+                  setEditedTask({
+                    ...editedTask,
+                    storyPoints: e.target.value === "" ? null : Math.max(0, parseInt(e.target.value, 10) || 0),
+                  })
+                }
+                placeholder="—"
+                className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-900"
+              />
             </div>
 
             <div className="space-y-3">
@@ -351,6 +427,42 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
               </Badge>
             </div>
           </div>
+
+          {/* Labels */}
+          {availableLabels.length > 0 && (
+            <div className="space-y-3">
+              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+                <Tag className="h-4 w-4 text-pink-500" />
+                <span>Labels</span>
+              </label>
+              <div className="flex flex-wrap gap-2 p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl border-2 border-gray-200">
+                {availableLabels.map((label) => {
+                  const selected = (editedTask.labels ?? []).some((l) => l.id === label.id)
+                  return (
+                    <button
+                      key={label.id}
+                      type="button"
+                      onClick={() => toggleLabel(label)}
+                      aria-pressed={selected}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-150 ${
+                        selected
+                          ? "border-transparent text-white shadow-sm"
+                          : "border-gray-200 text-gray-600 bg-white hover:border-gray-300"
+                      }`}
+                      style={selected ? { backgroundColor: label.color } : undefined}
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: selected ? "rgba(255,255,255,0.8)" : label.color }}
+                        aria-hidden="true"
+                      />
+                      {label.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <Separator className="bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
 
@@ -515,8 +627,8 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                   <Tag className="h-4 w-4 text-purple-500" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800">Task ID</p>
-                  <p className="text-gray-600 font-mono">#{editedTask.id}</p>
+                  <p className="font-semibold text-gray-800">{editedTask.issueKey ? "Issue Key" : "Task ID"}</p>
+                  <p className="text-gray-600 font-mono">{editedTask.issueKey || `#${editedTask.id}`}</p>
                 </div>
               </div>
             </div>

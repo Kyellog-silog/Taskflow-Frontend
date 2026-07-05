@@ -10,7 +10,7 @@ interface Task {
   title: string
   description: string
   status: string
-  priority: "low" | "medium" | "high"
+  priority: "highest" | "high" | "medium" | "low" | "lowest"
   assignee?: {
     id: string
     name: string
@@ -20,6 +20,10 @@ interface Task {
   comments: any[]
   createdAt: string
   canMoveTo?: string[]
+  issueKey?: string
+  issueType?: "epic" | "story" | "task" | "bug" | "subtask"
+  storyPoints?: number | null
+  labels?: { id: number; name: string; color: string }[]
 }
 
 interface SortableTaskCardProps {

@@ -634,6 +634,13 @@ export const tasksAPI = {
         assignee_id: taskData.assignee_id || taskData.assigneeId || null,
         priority: taskData.priority || "medium",
         due_date: taskData.due_date || taskData.dueDate || null,
+        issue_type: taskData.issue_type || taskData.issueType || "task",
+        ...((taskData.story_points ?? taskData.storyPoints) != null && {
+          story_points: taskData.story_points ?? taskData.storyPoints,
+        }),
+        ...((taskData.parent_id || taskData.parentId) && { parent_id: taskData.parent_id || taskData.parentId }),
+        ...((taskData.epic_id || taskData.epicId) && { epic_id: taskData.epic_id || taskData.epicId }),
+        ...(Array.isArray(taskData.labels) && { labels: taskData.labels }),
       }
 
       logger.log("Formatted task data for API:", formattedData)
@@ -673,6 +680,19 @@ export const tasksAPI = {
         ...((taskData.assignee_id !== undefined || taskData.assigneeId !== undefined) && {
           assignee_id: taskData.assignee_id || taskData.assigneeId,
         }),
+        ...((taskData.issue_type !== undefined || taskData.issueType !== undefined) && {
+          issue_type: taskData.issue_type || taskData.issueType,
+        }),
+        ...((taskData.story_points !== undefined || taskData.storyPoints !== undefined) && {
+          story_points: taskData.story_points ?? taskData.storyPoints,
+        }),
+        ...((taskData.parent_id !== undefined || taskData.parentId !== undefined) && {
+          parent_id: taskData.parent_id ?? taskData.parentId,
+        }),
+        ...((taskData.epic_id !== undefined || taskData.epicId !== undefined) && {
+          epic_id: taskData.epic_id ?? taskData.epicId,
+        }),
+        ...(Array.isArray(taskData.labels) && { labels: taskData.labels }),
       }
 
       const response = await api.put(`/tasks/${id}`, formattedData)
@@ -807,6 +827,73 @@ export const tasksAPI = {
 }
 
 // Boards API
+export const projectsAPI = {
+  getProjects: async () => {
+    const response = await api.get("/projects")
+    return response.data
+  },
+
+  getProject: async (id: number | string) => {
+    const response = await api.get(`/projects/${id}`)
+    return response.data
+  },
+
+  createProject: async (data: { name: string; key: string; description?: string; team_id?: number | null }) => {
+    const response = await api.post("/projects", data)
+    safeToast({
+      title: "Project Created!",
+      description: `"${data.name}" (${data.key}) is ready.`,
+      variant: "default",
+    })
+    return response.data
+  },
+
+  updateProject: async (id: number | string, data: { name?: string; description?: string; lead_user_id?: number }) => {
+    const response = await api.put(`/projects/${id}`, data)
+    return response.data
+  },
+
+  deleteProject: async (id: number | string) => {
+    const response = await api.delete(`/projects/${id}`)
+    safeToast({
+      title: "Project Deleted",
+      description: "The project has been removed.",
+      variant: "default",
+    })
+    return response.data
+  },
+
+  getProjectBoards: async (id: number | string) => {
+    const response = await api.get(`/projects/${id}/boards`)
+    return response.data
+  },
+
+  getLabels: async (projectId: number | string) => {
+    const response = await api.get(`/projects/${projectId}/labels`)
+    return response.data
+  },
+
+  createLabel: async (projectId: number | string, data: { name: string; color?: string }) => {
+    const response = await api.post(`/projects/${projectId}/labels`, data)
+    return response.data
+  },
+
+  updateLabel: async (labelId: number | string, data: { name?: string; color?: string }) => {
+    const response = await api.put(`/labels/${labelId}`, data)
+    return response.data
+  },
+
+  deleteLabel: async (labelId: number | string) => {
+    const response = await api.delete(`/labels/${labelId}`)
+    return response.data
+  },
+
+  getIssueByKey: async (issueKey: string) => {
+    const response = await api.get(`/issues/${encodeURIComponent(issueKey)}`)
+    return response.data
+  },
+}
+
 export const boardsAPI = {
   getBoards: async (type: "active" | "archived" | "deleted" | "recent" = "active", limit?: number) => {
     logger.log(`Fetching ${type} boards...`)

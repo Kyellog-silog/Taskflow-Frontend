@@ -29,7 +29,7 @@ export interface Task {
   description: string
   status: string
   columnId: string
-  priority: "low" | "medium" | "high"
+  priority: "highest" | "high" | "medium" | "low" | "lowest"
   assignee?: {
     id: string
     name: string
@@ -39,6 +39,11 @@ export interface Task {
   comments: any[]
   createdAt: string
   canMoveTo?: string[]
+  issueKey?: string
+  issueType?: "epic" | "story" | "task" | "bug" | "subtask"
+  storyPoints?: number | null
+  projectId?: string | null
+  labels?: { id: number; project_id: number; name: string; color: string }[]
 }
 
 interface Column {

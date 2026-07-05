@@ -26,6 +26,7 @@ import InvitePage from "./pages/InvitePage"
 import DashboardPage from "./pages/DashboardPage"
 import BoardPage from "./pages/BoardPage"
 import BoardsPage from "./pages/BoardsPage"
+import ProjectsPage from "./pages/ProjectsPage"
 import TeamsPage from "./pages/TeamsPage"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
@@ -222,6 +223,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <BoardsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/projects"
+                      element={
+                        <ProtectedRoute>
+                          <ProjectsPage />
                         </ProtectedRoute>
                       }
                     />

@@ -24,7 +24,7 @@ export interface Task {
   description: string
   status: string
   columnId: string
-  priority: "low" | "medium" | "high"
+  priority: "highest" | "high" | "medium" | "low" | "lowest"
   assignee?: {
     id: string
     name: string
@@ -34,6 +34,11 @@ export interface Task {
   comments: any[]
   createdAt: string
   canMoveTo?: string[]
+  issueKey?: string
+  issueType?: "epic" | "story" | "task" | "bug" | "subtask"
+  storyPoints?: number | null
+  projectId?: string | null
+  labels?: { id: number; project_id: number; name: string; color: string }[]
 }
 
 interface Column {
@@ -443,6 +448,11 @@ const BoardPage: React.FC = () => {
           dueDate: task.due_date || task.dueDate,
           comments: task.comments || [],
           createdAt: task.created_at || task.createdAt || new Date().toISOString(),
+          issueKey: task.issue_key || undefined,
+          issueType: task.issue_type || "task",
+          storyPoints: task.story_points ?? null,
+          projectId: task.project_id?.toString() || null,
+          labels: task.labels || [],
         }
       })
 
@@ -516,6 +526,9 @@ const BoardPage: React.FC = () => {
         priority: updatedTask.priority,
         due_date: updatedTask.dueDate,
         assignee_id: updatedTask.assignee?.id,
+        issue_type: updatedTask.issueType,
+        story_points: updatedTask.storyPoints,
+        ...(updatedTask.labels !== undefined && { labels: updatedTask.labels.map((l) => l.id) }),
       },
     })
   }
