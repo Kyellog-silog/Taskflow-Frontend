@@ -29,6 +29,8 @@ export interface Task {
     parentId?: string | null
     epicId?: string | null
     projectId?: string | null
+    // Workflow status (Phase 2) — synced server-side with the column mapping
+    statusId?: number | null
     labels?: Label[]
   }
 

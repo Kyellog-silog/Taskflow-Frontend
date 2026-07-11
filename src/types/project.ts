@@ -33,6 +33,34 @@ export interface Label {
 
 export type IssueType = "epic" | "story" | "task" | "bug" | "subtask"
 
+export type StatusCategory = "todo" | "in_progress" | "done"
+
+export interface Status {
+  id: number
+  project_id: number
+  name: string
+  category: StatusCategory
+  position: number
+  is_default: boolean
+}
+
+export interface Transition {
+  id: number
+  project_id: number
+  from_status_id: number | null // null = from any status
+  to_status_id: number
+  name: string | null
+  allowed_roles: string[] | null // null/empty = any editing member
+  from_status?: Status
+  to_status?: Status
+}
+
+export const STATUS_CATEGORIES: { value: StatusCategory; label: string; color: string }[] = [
+  { value: "todo", label: "To Do", color: "#64748b" },
+  { value: "in_progress", label: "In Progress", color: "#8b5cf6" },
+  { value: "done", label: "Done", color: "#10b981" },
+]
+
 export type IssuePriority = "highest" | "high" | "medium" | "low" | "lowest"
 
 export interface CreateProjectRequest {

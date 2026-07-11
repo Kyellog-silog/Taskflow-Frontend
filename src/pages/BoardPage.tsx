@@ -38,6 +38,7 @@ export interface Task {
   issueType?: "epic" | "story" | "task" | "bug" | "subtask"
   storyPoints?: number | null
   projectId?: string | null
+  statusId?: number | null
   labels?: { id: number; project_id: number; name: string; color: string }[]
 }
 
@@ -452,6 +453,7 @@ const BoardPage: React.FC = () => {
           issueType: task.issue_type || "task",
           storyPoints: task.story_points ?? null,
           projectId: task.project_id?.toString() || null,
+          statusId: task.status_id ?? null,
           labels: task.labels || [],
         }
       })

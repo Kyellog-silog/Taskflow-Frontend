@@ -111,6 +111,17 @@ export const useTaskOperations = ({ boardId }: UseTaskOperationsProps) => {
           queryClient.invalidateQueries({ queryKey: ["tasks", boardId] })
         }
 
+        // Workflow-blocked move: the card has already snapped back via the
+        // rollback above — explain why the server refused it
+        if (error.response?.status === 422 && error.response?.data?.allowed_status_ids) {
+          toast({
+            title: "Move Not Allowed",
+            description: error.response.data.message || "The project workflow does not allow this transition.",
+            variant: "destructive",
+          })
+          return
+        }
+
         // Handle conflicts gracefully
         if (error.response?.status === 409 && error.response?.data?.conflict) {
           const conflictData = error.response.data

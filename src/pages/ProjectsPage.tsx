@@ -17,8 +17,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu"
-import { FolderKanban, Plus, MoreVertical, Trash2, Kanban, CheckSquare, Users } from "lucide-react"
+import { FolderKanban, Plus, MoreVertical, Trash2, Kanban, CheckSquare, Users, GitBranch } from "lucide-react"
 import { useProjects, useCreateProject, useDeleteProject } from "../hooks/useProjects"
+import { WorkflowEditorModal } from "../components/WorkflowEditorModal"
 import { teamsAPI } from "../services/api"
 import type { Project } from "../types/project"
 
@@ -34,6 +35,7 @@ const KEY_REGEX = /^[A-Z][A-Z0-9]{1,7}$/
 const ProjectsPage = () => {
   const [createOpen, setCreateOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null)
+  const [workflowTarget, setWorkflowTarget] = useState<Project | null>(null)
 
   const { data: projects = [], isLoading } = useProjects()
   const createProject = useCreateProject()
@@ -149,6 +151,13 @@ const ProjectsPage = () => {
                         align="end"
                         className="bg-[#0d1224] border border-white/10 shadow-xl rounded-xl"
                       >
+                        <DropdownMenuItem
+                          className="text-slate-300 hover:text-white hover:bg-white/5 cursor-pointer rounded-lg mx-1 my-1 focus:bg-white/5 focus:text-white"
+                          onClick={() => setWorkflowTarget(project)}
+                        >
+                          <GitBranch className="h-4 w-4 mr-2 text-violet-400" aria-hidden="true" />
+                          Edit Workflow
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-400 hover:text-red-300 hover:bg-red-500/10 cursor-pointer rounded-lg mx-1 my-1 focus:bg-red-500/10 focus:text-red-300"
                           onClick={() => setDeleteTarget(project)}
@@ -298,6 +307,15 @@ const ProjectsPage = () => {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Workflow editor */}
+      {workflowTarget && (
+        <WorkflowEditorModal
+          project={workflowTarget}
+          isOpen={!!workflowTarget}
+          onClose={() => setWorkflowTarget(null)}
+        />
+      )}
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

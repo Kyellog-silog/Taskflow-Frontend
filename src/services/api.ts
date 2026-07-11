@@ -894,6 +894,56 @@ export const projectsAPI = {
   },
 }
 
+export const workflowAPI = {
+  getStatuses: async (projectId: number | string) => {
+    const response = await api.get(`/projects/${projectId}/statuses`)
+    return response.data
+  },
+
+  createStatus: async (projectId: number | string, data: { name: string; category: string; position?: number }) => {
+    const response = await api.post(`/projects/${projectId}/statuses`, data)
+    return response.data
+  },
+
+  updateStatus: async (statusId: number | string, data: { name?: string; category?: string; position?: number }) => {
+    const response = await api.put(`/statuses/${statusId}`, data)
+    return response.data
+  },
+
+  deleteStatus: async (statusId: number | string, moveToStatusId: number) => {
+    const response = await api.delete(`/statuses/${statusId}`, { data: { move_to_status_id: moveToStatusId } })
+    return response.data
+  },
+
+  getTransitions: async (projectId: number | string) => {
+    const response = await api.get(`/projects/${projectId}/transitions`)
+    return response.data
+  },
+
+  createTransition: async (
+    projectId: number | string,
+    data: { from_status_id?: number | null; to_status_id: number; name?: string; allowed_roles?: string[] },
+  ) => {
+    const response = await api.post(`/projects/${projectId}/transitions`, data)
+    return response.data
+  },
+
+  deleteTransition: async (transitionId: number | string) => {
+    const response = await api.delete(`/transitions/${transitionId}`)
+    return response.data
+  },
+
+  getTaskTransitions: async (taskId: number | string) => {
+    const response = await api.get(`/tasks/${taskId}/transitions`)
+    return response.data
+  },
+
+  executeTransition: async (taskId: number | string, transitionId: number) => {
+    const response = await api.post(`/tasks/${taskId}/transition`, { transition_id: transitionId })
+    return response.data
+  },
+}
+
 export const boardsAPI = {
   getBoards: async (type: "active" | "archived" | "deleted" | "recent" = "active", limit?: number) => {
     logger.log(`Fetching ${type} boards...`)
