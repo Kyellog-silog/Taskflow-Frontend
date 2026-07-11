@@ -191,20 +191,20 @@ export function CreateTaskModal({
   const getPriorityConfig = (priority: string) => {
     switch (priority) {
       case "high":
-        return { color: "text-red-600", bg: "bg-red-50", icon: "🔥" }
+        return { color: "text-red-400", bg: "bg-red-500/10", icon: "🔥" }
       case "medium":
-        return { color: "text-yellow-600", bg: "bg-yellow-50", icon: "⚡" }
+        return { color: "text-amber-400", bg: "bg-amber-500/10", icon: "⚡" }
       case "low":
-        return { color: "text-green-600", bg: "bg-green-50", icon: "🌱" }
+        return { color: "text-green-400", bg: "bg-green-500/10", icon: "🌱" }
       default:
-        return { color: "text-gray-600", bg: "bg-gray-50", icon: "📋" }
+        return { color: "text-slate-400", bg: "bg-white/5", icon: "📋" }
     }
   }
 
   const priorityConfig = getPriorityConfig(formData.priority)
 
   const defaultTrigger = (
-    <Button variant="ghost" size="sm" className="w-full justify-start text-gray-600 hover:text-white hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 transition-all duration-300 group">
+    <Button variant="ghost" size="sm" className="w-full justify-start text-slate-400 hover:text-white hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 transition-all duration-300 group">
       <Plus className="h-4 w-4 mr-2 group-hover:rotate-90 transition-transform duration-300" />
       Add task
     </Button>
@@ -221,9 +221,9 @@ export function CreateTaskModal({
         </DialogTrigger>
       )}
       
-      <DialogContent className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 max-w-md shadow-2xl">
+      <DialogContent className="bg-[#0d1224] border border-white/10 max-w-md shadow-2xl text-white">
         <DialogHeader>
-          <DialogTitle className="text-gray-900 flex items-center space-x-2">
+          <DialogTitle className="text-white flex items-center space-x-2">
             <Sparkles className="h-5 w-5 text-blue-500" />
             <span>Create New Task {columnName && `in ${columnName}`}</span>
           </DialogTitle>
@@ -231,7 +231,7 @@ export function CreateTaskModal({
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center space-x-2">
+            <label className="text-sm font-semibold text-slate-300 mb-3 block flex items-center space-x-2">
               <Target className="h-4 w-4 text-blue-500" />
               <span>Task Title *</span>
             </label>
@@ -240,24 +240,24 @@ export function CreateTaskModal({
               onChange={(e) => handleChange("title", e.target.value)}
               placeholder="What needs to be done?"
               required
-              className="bg-white border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              className="bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200"
             />
           </div>
           
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-3 block">Description</label>
+            <label className="text-sm font-semibold text-slate-300 mb-3 block">Description</label>
             <Textarea
               value={formData.description}
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Add some details to help your team understand the task..."
               rows={3}
-              className="bg-white border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              className="bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200"
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center space-x-2">
+              <label className="text-sm font-semibold text-slate-300 mb-3 block flex items-center space-x-2">
                 <Flag className="h-4 w-4 text-purple-500" />
                 <span>Priority</span>
               </label>
@@ -265,23 +265,23 @@ export function CreateTaskModal({
                 value={formData.priority} 
                 onValueChange={(value) => handleChange("priority", value)}
               >
-                <SelectTrigger className={`bg-white border-2 border-gray-200 text-gray-900 focus:border-blue-500 ${priorityConfig.bg}`}>
+                <SelectTrigger className={`bg-white/5 border border-white/10 text-white focus:border-violet-500 ${priorityConfig.bg}`}>
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200">
-                  <SelectItem value="low" className="text-gray-900 hover:bg-green-50">
+                <SelectContent className="bg-[#0d1224] border border-white/10 text-white">
+                  <SelectItem value="low" className="text-slate-200 hover:bg-white/5 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <span>🌱</span>
                       <span>Low Priority</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="medium" className="text-gray-900 hover:bg-yellow-50">
+                  <SelectItem value="medium" className="text-slate-200 hover:bg-white/5 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <span>⚡</span>
                       <span>Medium Priority</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="high" className="text-gray-900 hover:bg-red-50">
+                  <SelectItem value="high" className="text-slate-200 hover:bg-white/5 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <span>🔥</span>
                       <span>High Priority</span>
@@ -292,7 +292,7 @@ export function CreateTaskModal({
             </div>
             
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-3 block flex items-center space-x-2">
+              <label className="text-sm font-semibold text-slate-300 mb-3 block flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-green-500" />
                 <span>Due Date</span>
               </label>
@@ -301,18 +301,18 @@ export function CreateTaskModal({
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => handleChange("due_date", e.target.value)}
-                  className="bg-white border-2 border-gray-200 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                  className="bg-white/5 border border-white/10 text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200"
                 />
               </div>
             </div>
           </div>
           
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-white/[0.06]">
             <Button
               type="button"
               variant="outline"
               onClick={closeModal}
-              className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+              className="bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 hover:text-white transition-all duration-200"
             >
               Cancel
             </Button>

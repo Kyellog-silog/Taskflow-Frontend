@@ -79,22 +79,22 @@ export function EditBoardModal({ board, isOpen, onClose, onBoardUpdated }: EditB
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 shadow-2xl">
+      <DialogContent className="max-w-md bg-[#0d1224] border border-white/10 shadow-2xl text-white">
         <DialogHeader>
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
               <Edit className="h-6 w-6 text-white" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-gray-900">Edit Board</DialogTitle>
-              <p className="text-sm text-gray-600 mt-1">Update your board details</p>
+              <DialogTitle className="text-xl font-bold text-white">Edit Board</DialogTitle>
+              <p className="text-sm text-slate-400 mt-1">Update your board details</p>
             </div>
           </div>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="text-sm font-bold text-gray-700 mb-3 block flex items-center space-x-2">
+            <label className="text-sm font-bold text-slate-300 mb-3 block flex items-center space-x-2">
               <Sparkles className="h-4 w-4 text-blue-500" />
               <span>Board Name *</span>
             </label>
@@ -103,28 +103,28 @@ export function EditBoardModal({ board, isOpen, onClose, onBoardUpdated }: EditB
               onChange={(e) => handleChange("name", e.target.value)}
               placeholder="Enter board name"
               required
-              className="bg-white border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              className="bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200"
             />
           </div>
           
           <div>
-            <label className="text-sm font-bold text-gray-700 mb-3 block">Description</label>
+            <label className="text-sm font-bold text-slate-300 mb-3 block">Description</label>
             <Textarea
               value={formData.description}
               onChange={(e) => handleChange("description", e.target.value)}
               placeholder="Enter board description (optional)"
               rows={3}
-              className="bg-white border-2 border-gray-200 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+              className="bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200"
             />
           </div>
           
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 border-t border-white/[0.06]">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={updateBoardMutation.isPending}
-              className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+              className="bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 hover:text-white transition-all duration-200"
             >
               <X className="h-4 w-4 mr-2" />
               Cancel

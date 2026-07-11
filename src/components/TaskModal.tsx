@@ -125,43 +125,43 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
       case "highest":
         return {
           color: "bg-gradient-to-r from-red-600 to-rose-600 text-white",
-          bgColor: "from-red-50 to-rose-50",
-          borderColor: "border-red-300",
+          bgColor: "from-red-500/10 to-rose-500/10",
+          borderColor: "border-red-500/30",
           icon: "🔺"
         }
       case "high":
         return {
           color: "bg-gradient-to-r from-red-500 to-pink-500 text-white",
-          bgColor: "from-red-50 to-pink-50",
-          borderColor: "border-red-200",
+          bgColor: "from-red-500/10 to-pink-500/10",
+          borderColor: "border-red-500/20",
           icon: "🔥"
         }
       case "medium":
         return {
           color: "bg-gradient-to-r from-yellow-500 to-orange-500 text-white",
-          bgColor: "from-yellow-50 to-orange-50",
-          borderColor: "border-yellow-200",
+          bgColor: "from-amber-500/10 to-orange-500/10",
+          borderColor: "border-amber-500/20",
           icon: "⚡"
         }
       case "low":
         return {
           color: "bg-gradient-to-r from-green-500 to-emerald-500 text-white",
-          bgColor: "from-green-50 to-emerald-50",
-          borderColor: "border-green-200",
+          bgColor: "from-green-500/10 to-emerald-500/10",
+          borderColor: "border-green-500/20",
           icon: "🌱"
         }
       case "lowest":
         return {
           color: "bg-gradient-to-r from-slate-500 to-slate-600 text-white",
-          bgColor: "from-slate-50 to-gray-50",
-          borderColor: "border-slate-200",
+          bgColor: "from-slate-500/10 to-gray-500/10",
+          borderColor: "border-slate-500/20",
           icon: "🔽"
         }
       default:
         return {
           color: "bg-gradient-to-r from-gray-500 to-slate-500 text-white",
-          bgColor: "from-gray-50 to-slate-50",
-          borderColor: "border-gray-200",
+          bgColor: "from-gray-500/10 to-slate-500/10",
+          borderColor: "border-gray-500/20",
           icon: "📋"
         }
     }
@@ -223,7 +223,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl h-[90vh] flex flex-col bg-gradient-to-br from-white via-blue-50 to-purple-50 border-2 border-blue-200 shadow-2xl">
+      <DialogContent className="max-w-4xl h-[90vh] flex flex-col bg-[#0d1224] border border-white/10 shadow-2xl text-white">
         {/* Header */}
         <DialogHeader className="pb-0">
           <div className={`p-4 -m-6 mb-4 bg-gradient-to-r ${priorityConfig.bgColor} border-b-2 ${priorityConfig.borderColor} relative overflow-hidden`}>
@@ -232,14 +232,14 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
             
             <div className="relative z-10">
-              <DialogTitle className="flex items-center space-x-3 text-2xl font-bold text-gray-800">
+              <DialogTitle className="flex items-center space-x-3 text-2xl font-bold text-white">
                 <div className="p-2 bg-white/20 rounded-xl">
-                  <Tag className="h-6 w-6 text-gray-700" />
+                  <Tag className="h-6 w-6 text-slate-300" />
                 </div>
                 <span>Task Details</span>
                 <div className="text-2xl">{priorityConfig.icon}</div>
               </DialogTitle>
-              <p className="text-gray-600 mt-2 font-mono">
+              <p className="text-slate-400 mt-2 font-mono">
                 {editedTask.issueKey || `Task ID: #${editedTask.id.slice(-8)}`}
               </p>
             </div>
@@ -249,26 +249,26 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Task Title */}
           <div className="space-y-3">
-            <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+            <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
               <Sparkles className="h-4 w-4 text-blue-500" />
               <span>Task Title</span>
             </label>
             <Input
               value={editedTask.title}
               onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
-              className="text-lg font-semibold bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-900 placeholder:text-gray-500"
+              className="text-lg font-semibold bg-white/5 border border-white/10 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200 text-white placeholder:text-slate-500"
               placeholder="Enter task title..."
             />
           </div>
 
           {/* Task Description */}
           <div className="space-y-3">
-            <label className="text-sm font-bold text-gray-800">Description</label>
+            <label className="text-sm font-bold text-slate-300">Description</label>
             <Textarea
               value={editedTask.description}
               onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
               rows={4}
-              className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-900 placeholder:text-gray-500"
+              className="bg-white/5 border border-white/10 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200 text-white placeholder:text-slate-500"
               placeholder="Describe what needs to be done..."
             />
           </div>
@@ -276,34 +276,34 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
           {/* Task Properties Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800">Status</label>
+              <label className="text-sm font-bold text-slate-300">Status</label>
               <Select
                 value={editedTask.status}
                 onValueChange={handleStatusChange}
               >
-                <SelectTrigger className="bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-900">
+                <SelectTrigger className="bg-white/5 border border-white/10 focus:border-violet-500 text-white">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200">
-                  <SelectItem value="todo" className="hover:bg-blue-50 text-gray-900">
+                <SelectContent className="bg-[#0d1224] border border-white/10 text-white">
+                  <SelectItem value="todo" className="hover:bg-white/5 text-slate-200 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                       <span>To Do</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="in-progress" className="hover:bg-yellow-50 text-gray-900">
+                  <SelectItem value="in-progress" className="hover:bg-white/5 text-slate-200 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                       <span>In Progress</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="review" className="hover:bg-purple-50 text-gray-900">
+                  <SelectItem value="review" className="hover:bg-white/5 text-slate-200 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                       <span>Review</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="done" className="hover:bg-green-50 text-gray-900">
+                  <SelectItem value="done" className="hover:bg-white/5 text-slate-200 focus:bg-white/5 focus:text-white">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                       <span>Done</span>
@@ -314,7 +314,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+              <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
                 <Flag className="h-4 w-4 text-purple-500" />
                 <span>Priority</span>
               </label>
@@ -322,12 +322,12 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                 value={editedTask.priority}
                 onValueChange={(value: IssuePriority) => setEditedTask({ ...editedTask, priority: value })}
               >
-                <SelectTrigger className="bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-900">
+                <SelectTrigger className="bg-white/5 border border-white/10 focus:border-violet-500 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200">
+                <SelectContent className="bg-[#0d1224] border border-white/10 text-white">
                   {ISSUE_PRIORITIES.map((p) => (
-                    <SelectItem key={p.value} value={p.value} className="hover:bg-gray-50 text-gray-900">
+                    <SelectItem key={p.value} value={p.value} className="hover:bg-white/5 text-slate-200 focus:bg-white/5 focus:text-white">
                       <div className="flex items-center space-x-2">
                         <span>{p.icon}</span>
                         <span>{p.label} Priority</span>
@@ -339,7 +339,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+              <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
                 <Tag className="h-4 w-4 text-violet-500" />
                 <span>Issue Type</span>
               </label>
@@ -347,12 +347,12 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                 value={editedTask.issueType || "task"}
                 onValueChange={(value: IssueType) => setEditedTask({ ...editedTask, issueType: value })}
               >
-                <SelectTrigger className="bg-white border-2 border-gray-200 focus:border-blue-500 text-gray-900">
+                <SelectTrigger className="bg-white/5 border border-white/10 focus:border-violet-500 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-2 border-gray-200">
+                <SelectContent className="bg-[#0d1224] border border-white/10 text-white">
                   {ISSUE_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value} className="hover:bg-gray-50 text-gray-900">
+                    <SelectItem key={t.value} value={t.value} className="hover:bg-white/5 text-slate-200 focus:bg-white/5 focus:text-white">
                       <div className="flex items-center space-x-2">
                         <span>{t.icon}</span>
                         <span>{t.label}</span>
@@ -364,7 +364,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+              <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
                 <Sparkles className="h-4 w-4 text-amber-500" />
                 <span>Story Points</span>
               </label>
@@ -380,12 +380,12 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                   })
                 }
                 placeholder="—"
-                className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-900"
+                className="bg-white/5 border border-white/10 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200 text-white"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+              <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-green-500" />
                 <span>Due Date</span>
               </label>
@@ -393,19 +393,19 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                 type="date"
                 value={inputDueDate}
                 onChange={(e) => setEditedTask({ ...editedTask, dueDate: e.target.value })}
-                className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-900"
+                className="bg-white/5 border border-white/10 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200 text-white"
               />
             </div>
           </div>
 
           {/* Assignee Section */}
           <div className="space-y-3">
-            <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+            <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
               <User className="h-4 w-4 text-indigo-500" />
               <span>Assignee</span>
             </label>
-            <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl border-2 border-gray-200">
-              <Avatar className="h-12 w-12 ring-4 ring-white shadow-lg">
+            <div className="flex items-center space-x-4 p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+              <Avatar className="h-12 w-12 ring-2 ring-white/10">
                 <AvatarImage src={editedTask.assignee?.avatar || "/placeholder.svg"} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
                   {editedTask.assignee?.name
@@ -415,10 +415,10 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">
+                <p className="font-semibold text-white">
                   {editedTask.assignee?.name || "Unassigned"}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-slate-400">
                   {editedTask.assignee ? "Task assignee" : "No one assigned yet"}
                 </p>
               </div>
@@ -431,11 +431,11 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
           {/* Labels */}
           {availableLabels.length > 0 && (
             <div className="space-y-3">
-              <label className="text-sm font-bold text-gray-800 flex items-center space-x-2">
+              <label className="text-sm font-bold text-slate-300 flex items-center space-x-2">
                 <Tag className="h-4 w-4 text-pink-500" />
                 <span>Labels</span>
               </label>
-              <div className="flex flex-wrap gap-2 p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl border-2 border-gray-200">
+              <div className="flex flex-wrap gap-2 p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
                 {availableLabels.map((label) => {
                   const selected = (editedTask.labels ?? []).some((l) => l.id === label.id)
                   return (
@@ -447,7 +447,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border-2 transition-all duration-150 ${
                         selected
                           ? "border-transparent text-white shadow-sm"
-                          : "border-gray-200 text-gray-600 bg-white hover:border-gray-300"
+                          : "border-white/15 text-slate-300 bg-white/5 hover:border-white/30"
                       }`}
                       style={selected ? { backgroundColor: label.color } : undefined}
                     >
@@ -464,7 +464,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
             </div>
           )}
 
-          <Separator className="bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+          <Separator className="bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
           {/* Comments Section */}
           <div className="space-y-4">
@@ -472,7 +472,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
               <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl">
                 <MessageSquare className="h-5 w-5 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">
+              <h3 className="text-xl font-bold text-white">
                 Comments ({editedTask.comments.length})
               </h3>
             </div>
@@ -485,9 +485,9 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                 const createdAt = comment.created_at || comment.createdAt
                 const replies = comment.replies || []
                 return (
-                  <div key={comment.id} className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
+                  <div key={comment.id} className="p-4 bg-white/[0.03] rounded-xl border border-white/[0.06]">
                     <div className="flex space-x-3">
-                      <Avatar className="h-10 w-10 ring-2 ring-gray-200">
+                      <Avatar className="h-10 w-10 ring-2 ring-white/10">
                         <AvatarImage src={avatar} />
                         <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600 text-white">
                           {authorName.split(" ").map((n: string) => n[0]).join("")}
@@ -495,24 +495,24 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <span className="font-semibold text-gray-900">{authorName}</span>
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="font-semibold text-white">{authorName}</span>
+                          <span className="text-xs text-slate-400 bg-white/10 px-2 py-1 rounded-full">
                             {createdAt ? new Date(createdAt).toLocaleString() : ""}
                           </span>
                         </div>
-                        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{comment.content}</p>
 
                         {/* Replies */}
                         {replies.length > 0 && (
-                          <div className="mt-3 space-y-3 pl-6 border-l-2 border-gray-100">
+                          <div className="mt-3 space-y-3 pl-6 border-l-2 border-white/[0.06]">
                             {replies.map((rep: any) => {
                               const repName = rep.user?.name || "User"
                               const repAvatar = rep.user?.avatar || "/placeholder.svg"
                               const repAt = rep.created_at || rep.createdAt
                               return (
                                 <div key={rep.id} className="flex space-x-3">
-                                  <CornerDownRight className="h-4 w-4 text-gray-300 mt-3" />
-                                  <Avatar className="h-8 w-8 ring-2 ring-gray-200">
+                                  <CornerDownRight className="h-4 w-4 text-slate-600 mt-3" />
+                                  <Avatar className="h-8 w-8 ring-2 ring-white/10">
                                     <AvatarImage src={repAvatar} />
                                     <AvatarFallback className="bg-gradient-to-br from-gray-500 to-gray-600 text-white text-xs">
                                       {repName.split(" ").map((n: string) => n[0]).join("")}
@@ -520,12 +520,12 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                                   </Avatar>
                                   <div className="flex-1">
                                     <div className="flex items-center space-x-2 mb-1">
-                                      <span className="font-semibold text-gray-900 text-sm">{repName}</span>
-                                      <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                      <span className="font-semibold text-white text-sm">{repName}</span>
+                                      <span className="text-[10px] text-slate-400 bg-white/10 px-2 py-0.5 rounded-full">
                                         {repAt ? new Date(repAt).toLocaleString() : ""}
                                       </span>
                                     </div>
-                                    <p className="text-gray-700 text-sm whitespace-pre-wrap">{rep.content}</p>
+                                    <p className="text-slate-300 text-sm whitespace-pre-wrap">{rep.content}</p>
                                   </div>
                                 </div>
                               )
@@ -542,7 +542,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                                 value={replyDrafts[comment.id] || ""}
                                 onChange={(e) => setReplyDrafts((d) => ({ ...d, [comment.id]: e.target.value }))}
                                 rows={2}
-                                className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-900"
+                                className="bg-white/5 border border-white/10 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 text-white placeholder:text-slate-500"
                               />
                               <Button
                                 onClick={() => {
@@ -563,7 +563,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                               variant="ghost"
                               size="sm"
                               onClick={() => setReplyOpenFor(comment.id)}
-                              className="text-blue-600 hover:bg-blue-50"
+                              className="text-violet-400 hover:bg-violet-500/10"
                             >
                               Reply
                             </Button>
@@ -577,9 +577,9 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
             </div>
 
             {/* Add New Comment */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border-2 border-blue-200">
+            <div className="bg-violet-500/5 p-4 rounded-xl border border-violet-500/20">
               <div className="flex space-x-3">
-                <Avatar className="h-10 w-10 ring-2 ring-white shadow-sm">
+                <Avatar className="h-10 w-10 ring-2 ring-white/10">
                   <AvatarImage src="/placeholder.svg" />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold">
                     CU
@@ -591,7 +591,7 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     rows={3}
-                    className="bg-white border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 text-gray-900 placeholder:text-gray-500"
+                    className="bg-white/5 border border-white/10 focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all duration-200 text-white placeholder:text-slate-500"
                   />
                   <Button 
                     onClick={() => {
@@ -611,24 +611,24 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
           </div>
 
           {/* Task Metadata */}
-          <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border-2 border-gray-200">
+          <div className="bg-white/[0.03] p-6 rounded-xl border border-white/[0.06]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
+                <div className="p-2 bg-white/10 rounded-lg">
                   <Clock className="h-4 w-4 text-blue-500" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800">Created</p>
-                  <p className="text-gray-600">{new Date(editedTask.createdAt).toLocaleDateString()}</p>
+                  <p className="font-semibold text-slate-200">Created</p>
+                  <p className="text-slate-400">{new Date(editedTask.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
+                <div className="p-2 bg-white/10 rounded-lg">
                   <Tag className="h-4 w-4 text-purple-500" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-800">{editedTask.issueKey ? "Issue Key" : "Task ID"}</p>
-                  <p className="text-gray-600 font-mono">{editedTask.issueKey || `#${editedTask.id}`}</p>
+                  <p className="font-semibold text-slate-200">{editedTask.issueKey ? "Issue Key" : "Task ID"}</p>
+                  <p className="text-slate-400 font-mono">{editedTask.issueKey || `#${editedTask.id}`}</p>
                 </div>
               </div>
             </div>
@@ -636,11 +636,11 @@ export function TaskModal({ task, isOpen, onClose, onUpdate, onMove }: TaskModal
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-white/80 backdrop-blur-sm">
+        <div className="flex justify-end space-x-3 p-6 border-t border-white/[0.06]">
           <Button 
             variant="outline" 
             onClick={onClose}
-            className="bg-white border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+            className="bg-transparent border border-white/15 text-slate-300 hover:bg-white/5 hover:text-white transition-all duration-200"
           >
             <X className="h-4 w-4 mr-2" />
             Cancel
